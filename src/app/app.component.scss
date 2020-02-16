@@ -1,6 +1,18 @@
-.classplan-root {
+classplan-root {
 
-  mat-toolbar {
-    background: rgb(95, 20, 20);
+  mat-toolbar#header {
+    background-color: rgb(95, 20, 20);
+    padding: 8px 16px;
+
+    img {
+      height: 100%;
+      width: auto;
+      float: right;
+    }
   }
+
+  div.content {
+    margin: 32px;
+  }
+
 }

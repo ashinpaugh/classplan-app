@@ -1,7 +1,66 @@
 
-<mat-toolbar>
-  <img src="assets/images/ou-logo-grey.png" alt="OU Logo" />
+<mat-toolbar id="header">
+
+  <button
+    mat-button
+    id="btn-menu-toggle"
+    color="accent"
+    [matMenuTriggerFor]="menu"
+  >
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <mat-menu #menu="matMenu" yPosition="below" xPosition="after">
+
+    <button
+      mat-menu-item
+      (click)="openSearch()"
+    >
+      <mat-icon>search</mat-icon>
+      <span>Search</span>
+    </button>
+
+    <button mat-menu-item disabled>
+      <mat-icon>cloud_download</mat-icon>
+      <span>Export View</span>
+    </button>
+
+    <button mat-menu-item>
+      <mat-icon>create</mat-icon>
+      <span>Create Class</span>
+    </button>
+
+    <button
+      mat-menu-item
+      disabled
+    >
+      <mat-icon color="warn">clear</mat-icon>
+      <span>Clear View</span>
+    </button>
+
+  </mat-menu>
+
+  <span class="spacer"></span>
+
+  <img src="app/assets/images/ou-logo-grey.png" alt="OU Logo" />
 </mat-toolbar>
+
+<div class="content">
+  <full-calendar
+    defaultView="timeGridWeek"
+    minTime="08:00:00"
+    maxTime="22:00:00"
+    contentHeight="auto"
+    [startParam]="null"
+    [endParam]="null"
+    [lazyFetching]="true"
+    [allDaySlot]="false"
+    [weekends]="false"
+    [plugins]="calendarPlugins"
+    [header]="fcHeader$ | async"
+    [events]="events$ | async"
+  ></full-calendar>
+</div>
 
 
 <router-outlet></router-outlet>

@@ -1,0 +1,129 @@
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>
+      Search Filters
+    </mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <ng-container *ngTemplateOutlet="tplFields"></ng-container>
+  </mat-card-content>
+
+  <!--<span class="spacer"></span>-->
+
+  <mat-card-actions align="start">
+    <button mat-button color="accent" (click)="close()">
+      Close
+    </button>
+
+    <button mat-button color="accent" (click)="clearFilters()">
+      Clear
+    </button>
+
+    <span class="spacer"></span>
+
+    <button
+      mat-button
+      color="primary"
+      (click)="search()"
+    >
+      Search
+    </button>
+  </mat-card-actions>
+
+</mat-card>
+
+
+<ng-template #tplFields>
+  <mat-grid-list cols="12" rowHeight="fit">
+
+    <mat-grid-tile colspan="4">
+      Semester:
+    </mat-grid-tile>
+
+    <mat-grid-tile id="semester-container" colspan="8">
+      <ng-select
+        #refTermSearch
+        appendTo="#semester-container"
+        placeholder="Chose a Semester"
+        bindValue="id"
+        bindLabel="name"
+        [multiple]="false"
+        [clearable]="true"
+        [items]="terms$ | async"
+        [(ngModel)]="term"
+      ></ng-select>
+    </mat-grid-tile>
+
+    <mat-grid-tile
+      colspan="4"
+      [hidden]="undefined == (blocks$ | async)"
+    >
+      Term Block:
+    </mat-grid-tile>
+
+    <mat-grid-tile id="block-container" colspan="8" [hidden]="undefined == (blocks$ | async)">
+      <ng-select
+        #refBlockSearch
+        appendTo="#block-container"
+        placeholder="Chose a Block"
+        bindValue="id"
+        bindLabel="name"
+        [multiple]="true"
+        [clearable]="true"
+        [items]="blocks$ | async"
+      ></ng-select>
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan="4" [hidden]="undefined == (subjects$ | async)">
+      Subjects:
+    </mat-grid-tile>
+
+    <mat-grid-tile
+      id="subject-container"
+      colspan="8"
+      [hidden]="undefined == (subjects$ | async)"
+    >
+      <ng-select
+        #refSubjectSearch
+        appendTo="#subject-container"
+        placeholder="Chose a Subject"
+        groupBy="meta"
+        bindValue="id"
+        bindLabel="name"
+        [virtualScroll]="true"
+        [multiple]="true"
+        [clearable]="true"
+        [items]="subjects$ | async"
+      ></ng-select>
+    </mat-grid-tile>
+
+
+    <mat-grid-tile colspan="4" [hidden]="undefined == (instructors$ | async)">
+      Instructors:
+    </mat-grid-tile>
+
+    <mat-grid-tile
+      id="instructor-container"
+      colspan="8"
+      [hidden]="undefined == (instructors$ | async)"
+    >
+      <ng-select
+        #refInstructorSearch
+        appendTo="#instructor-container"
+        placeholder="Chose a Instructor"
+        groupBy="meta"
+        bindValue="id"
+        bindLabel="name"
+        dropdownPosition="top"
+        [virtualScroll]="true"
+        [multiple]="true"
+        [clearable]="true"
+        [items]="instructors$ | async"
+      ></ng-select>
+    </mat-grid-tile>
+
+
+  </mat-grid-list>
+</ng-template>

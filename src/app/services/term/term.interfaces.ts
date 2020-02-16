@@ -1,12 +1,14 @@
-import {Dictionary} from '../../interfaces/dictionary';
+/**
+ * TermService interfaces.
+ */
+import {BasicObject} from '../../interfaces/dictionary';
 
-export interface BlockObject {
-  id: number;
-  display_name: string;
+export interface BlockObject extends BasicObject {
+  term?: TermObject;
 }
 
 export interface TermObject {
-  blocks: Dictionary<BlockObject>[];
+  blocks: BlockObject[];
   id: number;
   name: string;
   year: number;

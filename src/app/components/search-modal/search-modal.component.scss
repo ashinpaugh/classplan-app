@@ -1,0 +1,45 @@
+classplan-search-modal {
+
+  mat-card {
+    display: flex !important;
+    flex-direction: column;
+    min-height: 420px;
+
+    mat-card-content {
+      mat-grid-list {
+        min-height: 420px;
+
+        mat-grid-tile.mat-grid-tile {
+
+          &[colspan="4"] {
+            & > figure {
+              margin-left: 8px !important;
+              justify-content: flex-start !important;
+            }
+          }
+
+          &[colspan="8"] {
+            overflow: visible;
+          }
+
+          ng-select {
+            width: 100%;
+
+            &.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
+              position: unset;
+            }
+
+            .ng-dropdown-panel .ng-dropdown-panel-items {
+              max-height: 200px;
+            }
+          }
+        }
+      }
+    }
+
+    mat-card-actions.mat-card-actions {
+      display: flex;
+      align-items: flex-end;
+    }
+  }
+}

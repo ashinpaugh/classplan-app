@@ -1,4 +1,20 @@
 /* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+@import "assets/material/material-styles";
+@import "~@ng-select/ng-select/themes/default.theme.css";
+// @import "~@ng-select/ng-select/themes/material.theme.css";
+@import "~@fullcalendar/core/main.css";
+@import "~@fullcalendar/daygrid/main.css";
+@import "~@fullcalendar/timegrid/main.css";
+
+span.spacer {
+  flex: 1 1 auto;
+}
+
+[hidden], [hidden="true"] {
+  display: none !important;
+}
+
+.mat-dialog-container {
+  overflow-y: hidden !important;
+}

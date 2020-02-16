@@ -17,15 +17,23 @@ export class AbstractLoggable {
   }
 
   protected log(message: string, ...args): this {
-    return this.doLog(console.log, message, ...args);
+    return this.doLog(console.log, message, args);
   }
 
-  protected doLog(method: (...args) => void, message: string, ...args): this {
+  protected warn(message: string, ...args): this {
+    return this.doLog(console.log, message, args);
+  }
+
+  protected debug(message: string, ...args): this {
+    return this.doLog(console.debug, message, args);
+  }
+
+  protected doLog(method: (...args: any[]) => void, message: string, args: any[]): this {
     if (!this.Enabled || !method) {
       return this;
     }
 
-    method(message, args);
+    method(`[${this.constructor.name}] ${message}`, ...args);
 
     return this;
   }
