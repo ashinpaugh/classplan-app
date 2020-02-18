@@ -1,17 +1,16 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, Inject, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {NgSelectComponent} from '@ng-select/ng-select';
 import {TermService} from '../../services/term/term.service';
 import {BlockObject, TermObject} from '../../services/term/term.interfaces';
-import {Observable, of, timer} from 'rxjs';
-import {concatMap, map, mergeMap, share, shareReplay, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import {BasicObject} from '../../interfaces/dictionary';
-import {NgSelectComponent} from '@ng-select/ng-select';
 import {AbstractComponent} from '../abstract-component';
 import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
 import {SectionService} from '../../services/section/section.service';
 import {SectionFetchAllParams} from '../../services/section/section.interfaces';
-import {FullCalendarService} from '../../services/full-calendar/full-calendar.service';
+import {Observable, of, timer} from 'rxjs';
+import {concatMap, map, share, shareReplay, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 
 export interface SearchFilters {
   term: TermObject;
@@ -28,6 +27,8 @@ export interface SearchFilters {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchModalComponent extends AbstractComponent implements AfterViewInit {
+
+  static lastFilters: SearchFilters;
 
   @ViewChild('refTermSearch', { static: false }) refTerm: NgSelectComponent;
   @ViewChild('refBlockSearch', { static: false }) refBlock: NgSelectComponent;
@@ -48,7 +49,6 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     protected subjects: SubjectService,
     protected instructors: InstructorService,
     protected sections: SectionService,
-    protected fullcalendar: FullCalendarService,
   ) {
     super();
   }
@@ -110,46 +110,21 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       .subscribe(subjects => this.log('subjects by instructor', subjects))
     ;
 
-    this.log('filters', this.data);
+    this.log('filters', SearchModalComponent.lastFilters);
 
-    if (!this.data || !this.data.term) {
+    if (!SearchModalComponent.lastFilters || !SearchModalComponent.lastFilters.term) {
       return;
     }
 
     setTimeout(() => this.setFilters(), 0);
   }
 
-  search() {
-    // Search is already in progress.
-    if (this.dialogRef.disableClose) {
-      this.log('canceld');
-      return;
-    }
+  sendSearchFilters() {
+    SearchModalComponent.lastFilters = this.getFilters();
 
-    this.dialogRef.disableClose = true;
-
-    const filters = this.getFilters(true) as SectionFetchAllParams;
-
-    this.fullcalendar.fetchAll(filters)
-      .pipe(
-        take(1),
-        takeUntil(this.ngUnsubscribe$),
-      )
-      .subscribe(
-        events => {
-          this.log('sections', events);
-
-          this.dialogRef.close({
-            filters: this.getFilters(),
-            events: events,
-          });
-        },
-        err => {
-          this.warn('search', err);
-          this.dialogRef.disableClose = false;
-        }
-      )
-    ;
+    this.dialogRef.close({
+      filters: this.getFilters(true),
+    });
   }
 
   clearFilters() {
@@ -157,15 +132,16 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     this.refBlock.clearModel();
     this.refSubject.clearModel();
     this.refInstructor.clearModel();
+
+    SearchModalComponent.lastFilters = undefined;
   }
 
   close() {
-    const filters = this.getFilters();
-    this.dialogRef.close({filters});
+    this.dialogRef.close(undefined);
   }
 
   protected setFilters() {
-    const termOption = this.refTerm.itemsList.findByLabel(this.data.term.name);
+    const termOption = this.refTerm.itemsList.findByLabel(SearchModalComponent.lastFilters.term.name);
 
     if (!termOption) {
       return;
@@ -195,11 +171,13 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       ;
     };
 
-    syncFilterWithSelect(this.refBlock, this.blocks$, this.data.blocks);
-    syncFilterWithSelect(this.refSubject, this.subjects$, this.data.subjects);
-    syncFilterWithSelect(this.refInstructor, this.instructors$, this.data.instructors);
+    syncFilterWithSelect(this.refBlock, this.blocks$, SearchModalComponent.lastFilters.blocks);
+    syncFilterWithSelect(this.refSubject, this.subjects$, SearchModalComponent.lastFilters.subjects);
+    syncFilterWithSelect(this.refInstructor, this.instructors$, SearchModalComponent.lastFilters.instructors);
   }
 
+  protected getFilters(): SearchFilters;
+  protected getFilters(asIds: boolean): SectionFetchAllParams;
   protected getFilters(asIds: boolean = false): SearchFilters | SectionFetchAllParams {
     const filters = {
       term: this.refTerm.selectedValues[0] as TermObject,
@@ -213,11 +191,10 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     }
 
     return {
-      term:  filters.term.id,
       block: filters.blocks.map(block => block.id),
       subject: filters.subjects.map(subject => subject.id),
       instructor: filters.instructors.map(instructor => instructor.id),
-    } as SectionFetchAllParams;
+    };
   }
 
 }

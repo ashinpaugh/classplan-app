@@ -7,9 +7,9 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatIconModule} from '@angular/material/icon';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatButtonModule} from '@angular/material/button';
-import {FullCalendarModule} from '@fullcalendar/angular';
 import {MatDialogModule} from '@angular/material/dialog';
-import {SearchModalModule} from './components/search-modal/search-modal.module';
+import {SearchModalComponentModule} from './components/search-modal/search-modal.module';
+import {CalendarComponentModule} from './components/calendar/calendar.module';
 
 @NgModule({
   declarations: [AppComponent],
@@ -21,10 +21,10 @@ import {SearchModalModule} from './components/search-modal/search-modal.module';
     MatIconModule,
     MatMenuModule,
     MatButtonModule,
-    FullCalendarModule,
     MatDialogModule,
 
-    SearchModalModule,
+    SearchModalComponentModule,
+    CalendarComponentModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

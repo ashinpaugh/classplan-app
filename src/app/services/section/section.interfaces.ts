@@ -1,7 +1,8 @@
 import {BlockObject} from '../term/term.interfaces';
 import {BasicObject} from '../../interfaces/dictionary';
+import {ApiParams} from '../abstract-service';
 
-export interface SectionFetchAllParams {
+export interface SectionFetchAllParams extends ApiParams {
   block: number | number[];
   subject: number | number[];
   instructor: number | number[];
@@ -14,7 +15,7 @@ export interface SectionObject {
   crn: number;
   status: number;
   number: string;
-  days: number
+  days: string;
   num_enrolled: number
   maximum_enrollment: number;
   meeting_type: number;

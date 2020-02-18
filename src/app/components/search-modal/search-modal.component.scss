@@ -3,35 +3,21 @@ classplan-search-modal {
   mat-card {
     display: flex !important;
     flex-direction: column;
-    min-height: 420px;
+    height: fit-content;
+    min-height: 560px;
 
     mat-card-content {
       mat-grid-list {
         min-height: 420px;
 
         mat-grid-tile.mat-grid-tile {
-
-          &[colspan="4"] {
-            & > figure {
-              margin-left: 8px !important;
-              justify-content: flex-start !important;
-            }
-          }
-
-          &[colspan="8"] {
-            overflow: visible;
-          }
+          overflow: visible;
+          display: flex;
+          flex-direction: row;
 
           ng-select {
-            width: 100%;
-
-            &.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
-              position: unset;
-            }
-
-            .ng-dropdown-panel .ng-dropdown-panel-items {
-              max-height: 200px;
-            }
+            width: 50%;
+            min-width: 180px;
           }
         }
       }

@@ -10,39 +10,21 @@
     <ng-container *ngTemplateOutlet="tplFields"></ng-container>
   </mat-card-content>
 
-  <!--<span class="spacer"></span>-->
+  <span class="spacer"></span>
 
-  <mat-card-actions align="start">
-    <button mat-button color="accent" (click)="close()">
-      Close
-    </button>
-
-    <button mat-button color="accent" (click)="clearFilters()">
-      Clear
-    </button>
-
-    <span class="spacer"></span>
-
-    <button
-      mat-button
-      color="primary"
-      (click)="search()"
-    >
-      Search
-    </button>
-  </mat-card-actions>
+  <ng-container *ngTemplateOutlet="tplActions"></ng-container>
 
 </mat-card>
 
 
 <ng-template #tplFields>
-  <mat-grid-list cols="12" rowHeight="fit">
+  <mat-grid-list cols="12" rowHeight="75px">
 
-    <mat-grid-tile colspan="4">
-      Semester:
-    </mat-grid-tile>
+    <mat-grid-tile id="semester-container" colspan="12" style="height: 75px;">
+      <h4>Semester:</h4>
 
-    <mat-grid-tile id="semester-container" colspan="8">
+      <span class="spacer"></span>
+
       <ng-select
         #refTermSearch
         appendTo="#semester-container"
@@ -56,14 +38,11 @@
       ></ng-select>
     </mat-grid-tile>
 
-    <mat-grid-tile
-      colspan="4"
-      [hidden]="undefined == (blocks$ | async)"
-    >
-      Term Block:
-    </mat-grid-tile>
+    <mat-grid-tile id="block-container" colspan="12" [hidden]="undefined == (blocks$ | async)">
+      <h4>Term Block:</h4>
 
-    <mat-grid-tile id="block-container" colspan="8" [hidden]="undefined == (blocks$ | async)">
+      <span class="spacer"></span>
+
       <ng-select
         #refBlockSearch
         appendTo="#block-container"
@@ -76,15 +55,15 @@
       ></ng-select>
     </mat-grid-tile>
 
-    <mat-grid-tile colspan="4" [hidden]="undefined == (subjects$ | async)">
-      Subjects:
-    </mat-grid-tile>
-
     <mat-grid-tile
       id="subject-container"
-      colspan="8"
+      colspan="12"
       [hidden]="undefined == (subjects$ | async)"
     >
+      <h4>Subjects:</h4>
+
+      <span class="spacer"></span>
+
       <ng-select
         #refSubjectSearch
         appendTo="#subject-container"
@@ -99,16 +78,15 @@
       ></ng-select>
     </mat-grid-tile>
 
-
-    <mat-grid-tile colspan="4" [hidden]="undefined == (instructors$ | async)">
-      Instructors:
-    </mat-grid-tile>
-
     <mat-grid-tile
       id="instructor-container"
-      colspan="8"
+      colspan="12"
       [hidden]="undefined == (instructors$ | async)"
     >
+      <h4>Instructors:</h4>
+
+      <span class="spacer"></span>
+
       <ng-select
         #refInstructorSearch
         appendTo="#instructor-container"
@@ -116,7 +94,7 @@
         groupBy="meta"
         bindValue="id"
         bindLabel="name"
-        dropdownPosition="top"
+        dropdownPosition="down"
         [virtualScroll]="true"
         [multiple]="true"
         [clearable]="true"
@@ -126,4 +104,29 @@
 
 
   </mat-grid-list>
+</ng-template>
+
+
+
+
+<ng-template #tplActions>
+  <mat-card-actions align="start">
+    <button mat-button color="accent" (click)="close()">
+      Close
+    </button>
+
+    <button mat-button color="accent" (click)="clearFilters()">
+      Clear
+    </button>
+
+    <span class="spacer"></span>
+
+    <button
+      mat-button
+      color="primary"
+      (click)="sendSearchFilters()"
+    >
+      Search
+    </button>
+  </mat-card-actions>
 </ng-template>

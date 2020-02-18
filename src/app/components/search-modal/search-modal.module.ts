@@ -27,5 +27,6 @@ import {FormsModule} from '@angular/forms';
     NgSelectModule,
   ],
   bootstrap: [SearchModalComponent],
+  exports: [SearchModalComponent],
 })
-export class SearchModalModule { }
+export class SearchModalComponentModule { }

@@ -2,7 +2,8 @@
  * Files / styling required by angular cdk / material.
  */
 
-@import '~@angular/material/prebuilt-themes/pink-bluegrey.css';
+// @import '~@angular/material/prebuilt-themes/pink-bluegrey.css';
+@import "./ou-theme.scss";
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

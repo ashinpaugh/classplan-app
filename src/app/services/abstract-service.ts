@@ -2,7 +2,12 @@ import {AbstractLoggable} from '../classes/abstract-loggable';
 import {from, Observable, of} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {mergeMap, tap} from 'rxjs/operators';
+import {Dictionary} from '../interfaces/dictionary';
 
+
+export interface ApiParams {
+  [ param: string ]: string|string[]|number|number[];
+}
 
 export abstract class AbstractService extends AbstractLoggable {
 
@@ -59,6 +64,22 @@ export abstract class AbstractService extends AbstractLoggable {
         }),
       )
     ;
+  }
+
+  protected createRequestBody(params: ApiParams): string {
+    const body = [];
+
+    Object.keys(params).forEach(key => {
+      const value = params[key];
+      const isArr = Array.isArray(value);
+      const param = isArr ? `${key}[]` : key;
+      const mappable = (isArr ? value : [value]) as any[];
+
+      // mappable.forEach(val => url.searchParams.append(param, val));
+      mappable.forEach(val => body.push(`${param}=${val}`));
+    });
+
+    return body.join('&');
   }
 
   protected normalizeParams(params): string {

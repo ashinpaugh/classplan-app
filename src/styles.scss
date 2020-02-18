@@ -1,8 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import "assets/material/material-styles";
-@import "~@ng-select/ng-select/themes/default.theme.css";
-// @import "~@ng-select/ng-select/themes/material.theme.css";
+// @import "~@ng-select/ng-select/themes/default.theme.css";
+@import "~@ng-select/ng-select/themes/material.theme.css";
 @import "~@fullcalendar/core/main.css";
 @import "~@fullcalendar/daygrid/main.css";
 @import "~@fullcalendar/timegrid/main.css";
@@ -15,6 +15,25 @@ span.spacer {
   display: none !important;
 }
 
-.mat-dialog-container {
-  overflow-y: hidden !important;
+.ng-select {
+  padding-bottom: 0;
 }
+
+/*.no-scroll {
+  overflow: hidden;
+
+  .mat-dialog-container {
+    overflow: hidden;
+  }
+}*/
+
+/*.mat-dialog-container {
+  overflow-y: hidden !important;
+}*/
+
+/*.mat-dialog-container {
+  overflow: visible !important;
+}*/
+
+//.mat-dialog-content, .mat-dialog-container{overflow: visible !important;}
+//.mat-dialog-actions{clear: both;}

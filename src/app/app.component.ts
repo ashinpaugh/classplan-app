@@ -1,12 +1,12 @@
-import {ChangeDetectionStrategy, Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid'
-import {FullCalendarComponent} from '@fullcalendar/angular';
-import {PluginDef} from '@fullcalendar/core/plugin-system';
+import {ChangeDetectionStrategy, Component, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
-import {SearchFilters, SearchModalComponent} from './components/search-modal/search-modal.component';
-import {take} from 'rxjs/operators';
+import {SearchModalComponent} from './components/search-modal/search-modal.component';
+import {CalendarComponent} from './components/calendar/calendar.component';
+import {SectionFetchAllParams} from './services/section/section.interfaces';
+import {BehaviorSubject} from 'rxjs';
+import {filter, take} from 'rxjs/operators';
+import {environment} from '../environments/environment';
+import {SectionService} from './services/section/section.service';
 
 @Component({
   selector: 'classplan-root',
@@ -15,52 +15,46 @@ import {take} from 'rxjs/operators';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
 
-  @ViewChild(FullCalendarComponent, { static: true }) fullCalendar: FullCalendarComponent;
+  @ViewChild(CalendarComponent, { static: true }) refCalendar: CalendarComponent;
 
-  calendarPlugins: PluginDef[];
-  fcHeader$: BehaviorSubject<object>;
-  events$: BehaviorSubject<object>;
-
-
-  protected storedFilters: SearchFilters;
+  filters$: BehaviorSubject<SectionFetchAllParams>;
 
   constructor(
-    protected dialog: MatDialog
+    protected dialog: MatDialog,
+    protected sections: SectionService,
   ) {
-    this.events$ = new BehaviorSubject<object>(undefined);
-    this.fcHeader$ = new BehaviorSubject<object>(this.getCalendarHeaderConfig());
-    this.calendarPlugins = [dayGridPlugin, timeGridPlugin];
-  }
-
-  ngOnInit(): void {
+    this.filters$ = new BehaviorSubject<SectionFetchAllParams>(undefined);
   }
 
   openSearch(): void {
     const searchModal = this.dialog.open<SearchModalComponent>(SearchModalComponent, {
       width: '50%',
-      minHeight: 500,
+      minHeight: 560,
       position: {top: '20%'},
-      data: this.storedFilters || {}
     });
 
     searchModal.afterClosed()
-      .pipe(take(1))
-      .subscribe((data: {filters: SearchFilters, events: any}) => {
-        this.storedFilters = data.filters;
-
-        this.events$.next(data.events);
-      })
+      .pipe(
+        take(1),
+        filter(data => !!data),
+      )
+      .subscribe((data: {filters: SectionFetchAllParams}) => this.filters$.next(data.filters))
     ;
   }
 
-  protected getCalendarHeaderConfig(title: string = '') {
-    return {
-      left: 'prev,next',
-      center: 'title',
-      right: 'timeGridWeek,timeGridDay',
-      title,
-    };
+  downloadExport(): void {
+    this.sections.getExportStream(this.filters$.getValue())
+      .then(async response => await this.sections.handleStreamDownload(response))
+    ;
   }
+
+  clearFiltersAndEvents(): void {
+    SearchModalComponent.lastFilters = undefined;
+
+    this.filters$.next(undefined);
+  }
+
+
 }

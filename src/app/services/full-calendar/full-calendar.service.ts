@@ -1,81 +1,160 @@
 import { Injectable } from '@angular/core';
 import {AbstractLoggable} from '../../classes/abstract-loggable';
 import {SectionService} from '../section/section.service';
-import {SectionFetchAllParams} from '../section/section.interfaces';
+import {SectionFetchAllParams, SectionObject} from '../section/section.interfaces';
+import {Dictionary} from '../../interfaces/dictionary';
+import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
+
+// @see https://fullcalendar.io/docs/event-object
+export interface EventObject {
+  id: number;
+  title: string;
+  daysOfWeek: number[];
+  allDay: boolean;
+  extendedProps: Dictionary<any> & {
+    section: SectionObject;
+  }
+
+  // Recurring events with specific times.
+  startRecur?: string;
+  endRecur?: string;
+  startTime?: string;
+  endTime?: string;
+
+  // All day properties.
+  start?: string;
+  end?: string;
+
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class FullCalendarService extends AbstractLoggable {
 
-  constructor(protected sections: SectionService) {
+  constructor(
+    protected sections: SectionService,
+  ) {
     super();
   }
 
-  fetchAll(params: SectionFetchAllParams) {
+  fetchAll(params: SectionFetchAllParams): Observable<EventObject[]> {
     return this.sections.fetchAll(params)
       .pipe(
-        map(results => {
-          return results.map(section => {
-            return {
-              id: section.id,
-              title: section.subject.name + ' ' + section.course.number + ': ' + section.number,
-              startRecur: section.start,
-              endRecur: section.end,
-              startTime: this.getTime(section.start_time),
-              endTime: this.getTime(section.end_time),
-              daysOfWeek: this.getDays(section.days),
-              //backgroundColor: '',
-              //borderColor: '',
-              //textColor: '',
-              extendedProps: {
-                section: section,
-              }
-            }
-          });
-        }),
+        map(sections => sections.map(section => this.formatSourceToEvent(section))),
       )
     ;
   }
 
-  protected getDays(strDays): number[] {
-    if (!strDays.length) {
+  /**
+   * Find the first ISO date out of the provided events.
+   *
+   * @param events
+   */
+  getEarliestSectionStart(events?: EventObject[]): string {
+    const format = (date: Date) => {
+      return date.toISOString().split('T')[0];
+    };
+
+    const startParam = (event: EventObject) => {
+      return event.startRecur ? event.startRecur : event.start;
+    };
+
+    if (!events || !events.length) {
+      return format(new Date());
+    }
+
+    const sortedSections = events.sort((a, b) => {
+      const dateA = new Date(startParam(a)).getTime();
+      const dateB = new Date(startParam(b)).getTime();
+
+      if (dateA < dateB) {
+        return -1;
+      }
+
+      if (dateA > dateB) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+    return format(new Date(startParam(sortedSections[0])));
+  }
+
+  protected formatSourceToEvent(section: SectionObject): EventObject {
+    const isAllDay = this.isAllDay(section);
+    const event = {
+      id: section.id,
+      title: section.subject.name + ' ' + section.course.number + ': ' + section.number,
+      allDay : isAllDay,
+      daysOfWeek: this.getDays(section, isAllDay),
+      extendedProps: {
+        section: section,
+      }
+    } as EventObject;
+
+    if (!isAllDay) {
+      event.startRecur = section.start;
+      event.endRecur = section.end;
+      event.startTime = this.getTime(section.start_time);
+      event.endTime = this.getTime(section.end_time);
+    } else {
+      event.start = section.start;
+      event.end = section.end;
+    }
+
+    return event;
+  }
+
+  protected getDays(section: SectionObject, isAllDay?: boolean): number[] {
+    const days = section.days;
+    const dow  = ['U', 'M', 'T', 'W', 'R', 'F', 'S'];
+
+    isAllDay = isAllDay === undefined ? this.isAllDay(section) : isAllDay;
+
+    if (isAllDay) {
+      return Array.from(dow.keys());
+    }
+
+    if (!days.length) {
       return [];
     }
 
-    let dow, days, parts, idx;
-    dow   = ['U', 'M', 'T', 'W', 'R', 'F', 'S'];
-    days  = [];
+    const parts = -1 === days.indexOf('/')
+      ? [days]
+      : days.split('/')
+    ;
 
-    if (-1 === strDays.indexOf('/')) {
-      parts = strDays;
-    } else {
-      parts = strDays.split('/');
-    }
-
-    for (idx in parts) {
-      if (!parts.hasOwnProperty(idx)) {
-        continue;
-      }
-
-      let initial = parts[idx];
-      days.push(dow.indexOf(initial));
-    }
-
-    return days;
+    return parts.map(part => dow.indexOf(part));
   }
 
   /**
    * Format the time.
    *
-   * @param {string} strTime
-   * @returns {string}
+   * @param time
    */
-  protected getTime(strTime) {
-    let time = 4 === strTime.length ? strTime : '0' + strTime;
+  protected getTime(time: string): string {
+    if (!time) {
+      return time;
+    }
 
-    return time.substr(0, 2) + ':' + time.substr(2);
+    const target = 4 === time.length ? time : '0' + time;
+
+    return target.substr(0, 2) + ':' + target.substr(2);
+  }
+
+  /**
+   * Determine if the section is considered an all day event.
+   *
+   * @param section
+   */
+  protected isAllDay(section: SectionObject): boolean {
+    return section.building.name === 'WEB' || section.start_time === section.end_time;
   }
 
 }
