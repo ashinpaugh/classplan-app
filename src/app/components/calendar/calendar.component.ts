@@ -3,6 +3,7 @@ import {FullCalendarComponent} from '@fullcalendar/angular';
 import {PluginDef} from "@fullcalendar/core/plugin-system";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import tippy from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionFetchAllParams} from '../../services/section/section.interfaces';
@@ -92,6 +93,17 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     if ('filters' in changes) {
       this.filters$.next(changes.filters.currentValue);
     }
+  }
+
+  eventRender(data: {
+    event: EventObject,
+    el: HTMLElement,
+    isMirror: boolean,
+    isStart: boolean,
+    isEnd: boolean,
+    view: any
+  }) {
+    tippy(data.el)
   }
 
   protected getCalendarHeaderConfig() {

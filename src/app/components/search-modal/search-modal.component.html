@@ -34,7 +34,6 @@
         [multiple]="false"
         [clearable]="true"
         [items]="terms$ | async"
-        [(ngModel)]="term"
       ></ng-select>
     </mat-grid-tile>
 
@@ -94,7 +93,6 @@
         groupBy="meta"
         bindValue="id"
         bindLabel="name"
-        dropdownPosition="down"
         [virtualScroll]="true"
         [multiple]="true"
         [clearable]="true"
@@ -124,6 +122,7 @@
     <button
       mat-button
       color="primary"
+      [disabled]="disableSearch$ | async"
       (click)="sendSearchFilters()"
     >
       Search

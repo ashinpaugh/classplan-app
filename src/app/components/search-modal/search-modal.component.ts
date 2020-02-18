@@ -1,4 +1,12 @@
-import {AfterViewInit, ChangeDetectionStrategy, Component, Inject, ViewChild, ViewEncapsulation} from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  Inject, QueryList,
+  ViewChild,
+  ViewChildren,
+  ViewEncapsulation
+} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {TermService} from '../../services/term/term.service';
@@ -9,8 +17,8 @@ import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
 import {SectionService} from '../../services/section/section.service';
 import {SectionFetchAllParams} from '../../services/section/section.interfaces';
-import {Observable, of, timer} from 'rxjs';
-import {concatMap, map, share, shareReplay, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {combineLatest, Observable, of, timer} from 'rxjs';
+import {concatMap, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 
 export interface SearchFilters {
   term: TermObject;
@@ -30,13 +38,13 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
 
   static lastFilters: SearchFilters;
 
+  @ViewChildren(NgSelectComponent) selects: QueryList<NgSelectComponent>;
   @ViewChild('refTermSearch', { static: false }) refTerm: NgSelectComponent;
   @ViewChild('refBlockSearch', { static: false }) refBlock: NgSelectComponent;
   @ViewChild('refSubjectSearch', { static: false }) refSubject: NgSelectComponent;
   @ViewChild('refInstructorSearch', { static: false }) refInstructor: NgSelectComponent;
 
-  term: TermObject;
-
+  disableSearch$: Observable<boolean>;
   terms$: Observable<TermObject[]>;
   blocks$: Observable<BlockObject[]>;
   subjects$: Observable<BasicObject[]>;
@@ -54,6 +62,26 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   }
 
   ngAfterViewInit(): void {
+
+    this.disableSearch$ = combineLatest([
+      this.refBlock.changeEvent,
+      this.refSubject.changeEvent.pipe(startWith(undefined)),
+      this.refInstructor.changeEvent.pipe(startWith(undefined)),
+    ])
+      .pipe(
+        tap(results => this.debug('disableSearch$ -> peak', results)),
+        map((results: [BlockObject[], BasicObject[], BasicObject[]]) => {
+          const [blocks, subjects, instructors] = results;
+
+          const invalid = (item: BasicObject[]) => !item || !!item && !item.length;
+
+          return invalid(blocks) || invalid(subjects) && invalid(instructors);
+        }),
+        startWith(true),
+        tap(disableSearch => this.log('disableSearch$', disableSearch)),
+      )
+    ;
+
     this.terms$ = this.terms.fetchAll()
       .pipe(
         map(data => data.terms),
@@ -128,12 +156,9 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   }
 
   clearFilters() {
-    this.refTerm.clearModel();
-    this.refBlock.clearModel();
-    this.refSubject.clearModel();
-    this.refInstructor.clearModel();
-
     SearchModalComponent.lastFilters = undefined;
+
+    this.selects.forEach(select => select.clearModel());
   }
 
   close() {
