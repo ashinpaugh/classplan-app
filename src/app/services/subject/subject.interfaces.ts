@@ -2,7 +2,8 @@ import {BasicObject, Dictionary} from '../../interfaces/dictionary';
 import {BlockObject} from '../term/term.interfaces';
 
 
-export interface ApiGetBlockAwareSubjectList {
+export interface BlockAwareSubjectList {
   block: BlockObject;
   subjects: BasicObject[];
+  instructor?: BasicObject[];
 }

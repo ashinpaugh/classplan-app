@@ -45,7 +45,12 @@ export class FullCalendarService extends AbstractLoggable {
   fetchAll(params: SectionFetchAllParams): Observable<EventObject[]> {
     return this.sections.fetchAll(params)
       .pipe(
-        map(sections => sections.map(section => this.formatSourceToEvent(section))),
+        map(sections => {
+          return sections
+            .filter(section => params.showOnline || (!params.showOnline && !this.isOnline(section)))
+            .map(section => this.formatSourceToEvent(section))
+          ;
+        }),
       )
     ;
   }
@@ -148,13 +153,18 @@ export class FullCalendarService extends AbstractLoggable {
     return target.substr(0, 2) + ':' + target.substr(2);
   }
 
+  protected isOnline(section: SectionObject): boolean {
+    return 'WEB' === section.building.name;
+  }
+
   /**
    * Determine if the section is considered an all day event.
    *
    * @param section
+   * @param includeOnline
    */
-  protected isAllDay(section: SectionObject): boolean {
-    return section.building.name === 'WEB' || section.start_time === section.end_time;
+  protected isAllDay(section: SectionObject, includeOnline: boolean = true): boolean {
+    return includeOnline && this.isOnline(section) || !section.days && section.start_time === section.end_time;
   }
 
 }

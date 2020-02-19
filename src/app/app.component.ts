@@ -3,10 +3,9 @@ import {MatDialog} from '@angular/material/dialog';
 import {SearchModalComponent} from './components/search-modal/search-modal.component';
 import {CalendarComponent} from './components/calendar/calendar.component';
 import {SectionFetchAllParams} from './services/section/section.interfaces';
+import {SectionService} from './services/section/section.service';
 import {BehaviorSubject} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
-import {environment} from '../environments/environment';
-import {SectionService} from './services/section/section.service';
 
 @Component({
   selector: 'classplan-root',
@@ -32,7 +31,7 @@ export class AppComponent {
     const searchModal = this.dialog.open<SearchModalComponent>(SearchModalComponent, {
       width: '50%',
       minHeight: 560,
-      position: {top: '20%'},
+      position: {top: '10vh'},
     });
 
     searchModal.afterClosed()

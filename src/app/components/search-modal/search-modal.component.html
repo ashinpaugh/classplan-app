@@ -8,6 +8,33 @@
 
   <mat-card-content>
     <ng-container *ngTemplateOutlet="tplFields"></ng-container>
+
+    <mat-selection-list
+      #refAdvancedOptions
+      [hidden]="undefined == ((instructors$ | async) || (subjects$ | async))"
+      (selectionChange)="advancedChanged($event)"
+    >
+      <mat-list-option
+        ngDefaultControl
+        color="primary"
+        [value]="'showAllDay'"
+        [selected]="(advanced$ | async).showAllDay"
+        [(ngModel)]="showAllDay"
+      >
+        Show All Day:
+      </mat-list-option>
+
+      <mat-list-option
+        ngDefaultControl
+        color="primary"
+        [value]="'showOnline'"
+        [disabled]="!(advanced$ | async).showAllDay"
+        [selected]="(advanced$ | async).showOnline"
+        [(ngModel)]="showOnline"
+      >
+        Show Online:
+      </mat-list-option>
+    </mat-selection-list>
   </mat-card-content>
 
   <span class="spacer"></span>
@@ -99,7 +126,6 @@
         [items]="instructors$ | async"
       ></ng-select>
     </mat-grid-tile>
-
 
   </mat-grid-list>
 </ng-template>

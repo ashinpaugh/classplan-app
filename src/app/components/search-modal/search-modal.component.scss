@@ -6,9 +6,16 @@ classplan-search-modal {
     height: fit-content;
     min-height: 560px;
 
+    mat-card-header {
+      .mat-card-header-text {
+        margin: 0 4px;
+      }
+    }
+
     mat-card-content {
       mat-grid-list {
-        min-height: 420px;
+        // min-height: 420px;
+        margin: 0 16px;
 
         mat-grid-tile.mat-grid-tile {
           overflow: visible;
@@ -16,9 +23,16 @@ classplan-search-modal {
           flex-direction: row;
 
           ng-select {
-            width: 50%;
+            width: 75%;
             min-width: 180px;
           }
+        }
+      }
+
+      mat-selection-list {
+        figure {
+          // padding: 16px;
+          justify-content: flex-start;
         }
       }
     }

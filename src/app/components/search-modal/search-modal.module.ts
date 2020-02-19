@@ -9,6 +9,8 @@ import {MatGridListModule} from '@angular/material/grid-list';
 import {NgSelectModule} from '@ng-select/ng-select';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatListModule} from '@angular/material/list';
 
 
 @NgModule({
@@ -25,6 +27,8 @@ import {FormsModule} from '@angular/forms';
     MatDialogModule,
     MatGridListModule,
     NgSelectModule,
+    MatCheckboxModule,
+    MatListModule,
   ],
   bootstrap: [SearchModalComponent],
   exports: [SearchModalComponent],

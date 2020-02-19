@@ -9,6 +9,7 @@ import {EventObject, FullCalendarService} from '../../services/full-calendar/ful
 import {SectionFetchAllParams} from '../../services/section/section.interfaces';
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {switchMap, takeUntil, tap} from 'rxjs/operators';
+import {SearchFilters} from '../search-modal/search-modal.component';
 
 /**
  * @see https://fullcalendar.io/docs/header
@@ -52,8 +53,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   @Input() allDaySlot: boolean = true;
 
   events$: Observable<EventObject[]>;
-
-  protected filters$: BehaviorSubject<SectionFetchAllParams>;
+  filters$: BehaviorSubject<SectionFetchAllParams>;
 
   constructor(
     protected fullcalendar: FullCalendarService,
@@ -91,6 +91,10 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('filters' in changes) {
+      if (!!changes.filters.currentValue && !!changes.filters.currentValue.advanced) {
+        this.allDaySlot = (changes.filters.currentValue as SearchFilters).advanced.showAllDay;
+      }
+
       this.filters$.next(changes.filters.currentValue);
     }
   }
@@ -103,7 +107,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     isEnd: boolean,
     view: any
   }) {
-    tippy(data.el)
+    // tippy(data.el)
   }
 
   protected getCalendarHeaderConfig() {

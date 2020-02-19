@@ -8,7 +8,7 @@
     [startParam]="null"
     [endParam]="null"
     [lazyFetching]="true"
-    [allDaySlot]="allDaySlot"
+    [allDaySlot]="1 == (filters$ | async)?.showAllDay"
     [weekends]="false"
     [plugins]="plugins"
     [header]="header"

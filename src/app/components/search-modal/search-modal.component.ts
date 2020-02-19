@@ -2,7 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  Inject, QueryList,
+  Inject, Input, QueryList,
   ViewChild,
   ViewChildren,
   ViewEncapsulation
@@ -17,14 +17,31 @@ import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
 import {SectionService} from '../../services/section/section.service';
 import {SectionFetchAllParams} from '../../services/section/section.interfaces';
-import {combineLatest, Observable, of, timer} from 'rxjs';
-import {concatMap, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {BehaviorSubject, combineLatest, Observable, of, timer} from 'rxjs';
+import {
+  concatMap,
+  map,
+  share,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  takeUntil,
+  tap
+} from 'rxjs/operators';
+import {MatSelectionListChange} from '@angular/material/list';
 
 export interface SearchFilters {
   term: TermObject;
   blocks: BlockObject[];
   subjects: BasicObject[];
   instructors: BasicObject[];
+  advanced: AdvancedFilters;
+}
+
+export interface AdvancedFilters {
+  showAllDay: boolean;
+  showOnline: boolean;
 }
 
 @Component({
@@ -50,6 +67,8 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   subjects$: Observable<BasicObject[]>;
   instructors$: Observable<BasicObject[]>;
 
+  advanced$: BehaviorSubject<AdvancedFilters>;
+
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: SearchFilters,
     protected dialogRef: MatDialogRef<SearchModalComponent>,
@@ -59,6 +78,30 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     protected sections: SectionService,
   ) {
     super();
+
+    this.advanced$ = new BehaviorSubject<AdvancedFilters>({showAllDay: true, showOnline: true});
+  }
+
+  get showAllDay() {
+    return this.advanced$.getValue().showAllDay;
+  }
+
+  @Input()
+  set showAllDay(show: boolean) {
+    const advanced = this.advanced$.getValue();
+    advanced.showAllDay = show;
+    this.advanced$.next(advanced);
+  }
+
+  get showOnline() {
+    return this.advanced$.getValue().showOnline;
+  }
+
+  @Input()
+  set showOnline(show: boolean) {
+    const advanced = this.advanced$.getValue();
+    advanced.showOnline = show;
+    this.advanced$.next(advanced);
   }
 
   ngAfterViewInit(): void {
@@ -98,44 +141,52 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       )
     ;
 
-    this.subjects$ = this.refBlock.changeEvent
+    this.subjects$ = combineLatest([
+      this.refBlock.changeEvent,
+      this.refInstructor.changeEvent.pipe(startWith(undefined)),
+    ])
       .pipe(
-        // tap(value => this.log('subjects -> blocks', value)),
-        switchMap((blocks: BlockObject[]) => {
+        // tap(value => this.log('subjects -> peak', value)),
+        switchMap((results: [BlockObject[], BasicObject[]]) => {
+          const [blocks, instructors] = results;
+
           if (!blocks || !blocks.length) {
+            this.ngSelectClear(this.refSubject);
+
             return of(undefined);
           }
 
-          return this.subjects.fetchAllByBlock(blocks);
+          if (!instructors || !instructors.length) {
+            return this.subjects.fetchAllByBlock(blocks);
+          }
+
+          return this.subjects.fetchByInstructor(blocks, instructors);
         }),
         tap((data) => this.log('subjects', data)),
         share()
       )
     ;
 
-    // this.instructors.fetchAll()
-    this.instructors$ = this.refBlock.changeEvent
+    this.instructors$ = combineLatest([
+      this.refBlock.changeEvent,
+      this.refSubject.changeEvent.pipe(startWith(undefined)),
+    ])
       .pipe(
-        tap(results => this.log('instructors$ -> peak', results)),
-        switchMap((blocks: BlockObject[]) => {
+        // tap(results => this.log('instructors$ -> peak', results)),
+        switchMap((data: [BlockObject[], BasicObject[]]) => {
+          const [blocks, subjects] = data;
+
           if (!blocks || !blocks.length) {
+            this.ngSelectClear(this.refInstructor);
+
             return of(undefined);
           }
 
-          const blockIds = blocks.map(block => block.id);
-
-          return this.instructors.fetchAllByBlock(blockIds);
+          return this.instructors.fetchAllByBlock(blocks, subjects);
         }),
         tap(instructors => this.log('instructors$', instructors)),
         share(),
       )
-    ;
-
-    this.refInstructor.changeEvent
-      .pipe(
-        switchMap((instructors: BasicObject[]) => this.subjects.fetchByInstructor(instructors)),
-      )
-      .subscribe(subjects => this.log('subjects by instructor', subjects))
     ;
 
     this.log('filters', SearchModalComponent.lastFilters);
@@ -145,6 +196,15 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     }
 
     setTimeout(() => this.setFilters(), 0);
+  }
+
+  advancedChanged(data: MatSelectionListChange) {
+    this.log('advancedChanged', data);
+    const option = data.option.value as keyof AdvancedFilters;
+    const advanced = this.advanced$.getValue();
+    advanced[option] = data.option.selected;
+
+    this.advanced$.next(advanced);
   }
 
   sendSearchFilters() {
@@ -172,6 +232,8 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       return;
     }
 
+    this.showAllDay = SearchModalComponent.lastFilters.advanced.showAllDay;
+    this.showOnline = SearchModalComponent.lastFilters.advanced.showOnline;
     this.refTerm.select(termOption);
 
     const syncFilterWithSelect = (
@@ -209,6 +271,10 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       blocks: this.refBlock.selectedValues as BlockObject[],
       subjects: this.refSubject.selectedValues as BasicObject[],
       instructors: this.refInstructor.selectedValues as BasicObject[],
+      advanced: {
+        showAllDay: this.showAllDay,
+        showOnline: this.showOnline,
+      }
     } as SearchFilters;
 
     if (!asIds) {
@@ -219,7 +285,25 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       block: filters.blocks.map(block => block.id),
       subject: filters.subjects.map(subject => subject.id),
       instructor: filters.instructors.map(instructor => instructor.id),
+      showAllDay: Number(this.showAllDay),
+      showOnline: Number(this.showOnline),
     };
+  }
+
+  /**
+   * Clear an ngSelect if it has a selected values.
+   *
+   * Calling .clearModel() on an already empty ngSelect triggers values changes and infinite loops
+   * in observables that listen to other value changes.
+   *
+   * @param ngSelect
+   */
+  protected ngSelectClear(ngSelect: NgSelectComponent): void {
+    if (!ngSelect || !ngSelect.selectedValues || !ngSelect.selectedValues.length) {
+      return;
+    }
+
+    ngSelect.clearModel();
   }
 
 }

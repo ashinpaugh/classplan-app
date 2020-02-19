@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import {AbstractService} from '../abstract-service';
 import {merge, Observable} from 'rxjs';
-import {ApiGetBlockAwareSubjectList} from './subject.interfaces';
+import {BlockAwareSubjectList} from './subject.interfaces';
 import {BlockObject} from '../term/term.interfaces';
-import {BasicObject, Dictionary} from '../../interfaces/dictionary';
-import {map, toArray} from 'rxjs/operators';
+import {BasicObject} from '../../interfaces/dictionary';
+import {map, tap, toArray} from 'rxjs/operators';
+import {ArrayUtil} from '../../classes/tools/array.util';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +24,7 @@ export class SubjectService extends AbstractService {
 
   fetchAllByBlock(
     block: BlockObject | BlockObject[],
-    metaKey: keyof BlockObject = 'name',
+    blockKey: keyof BlockObject = 'name',
   ): Observable<BasicObject[]> {
 
     const blocks = Array.isArray(block) ? block : [block];
@@ -31,29 +32,36 @@ export class SubjectService extends AbstractService {
 
     return merge(...fetchArr$)
       .pipe(
-        map((result: ApiGetBlockAwareSubjectList) => {
-          return result.subjects.map(subject => {
-            subject.meta = result.block[metaKey];
-
-            return subject;
-          })
-        }),
+        map((result: BlockAwareSubjectList) => this.mapSubject(result.block, result.subjects, blockKey)),
         toArray(),
         map((results: BasicObject[][]) => [].concat(...results)),
+        tap(results => this.log('fetchAllByBlock', results)),
       )
     ;
   }
 
-  fetchByInstructor(instructor: BasicObject | BasicObject[]): Observable<BasicObject[]> {
-    const instructors = Array.isArray(instructor) ? instructor : [instructor];
-    const fetchArr$ = instructors.map(instructor => this.doFetchAll(`subject/${instructor.id}/instructor.json`));
+  fetchByInstructor(blocks: BasicObject[], instructors: BasicObject[]): Observable<BasicObject[]> {
+    const fetchArr = [];
 
-    return merge(...fetchArr$)
+    blocks.forEach(block => instructors.forEach(instructor => {
+      fetchArr.push(this.doFetchAll(`term/${block.id}/instructor/${instructor.id}/subjects.json`));
+    }));
+
+    return merge(...fetchArr)
       .pipe(
-        map((response: {subjects: Dictionary<BasicObject>}) => Object.values(response.subjects)),
         toArray(),
+        map((responses: BlockAwareSubjectList[]) => responses.map(response => this.mapSubject(response.block, response.subjects))),
         map((results: BasicObject[][]) => [].concat(...results)),
+        map((results: BasicObject[]) => ArrayUtil.unique<BasicObject>(results, 'id')),
       )
     ;
+  }
+
+  protected mapSubject(block: BlockObject, subjects: BasicObject[], blockKey: keyof BlockObject = 'name') {
+    return subjects.map(subject => {
+      subject.meta = block[blockKey];
+
+      return subject;
+    })
   }
 }
