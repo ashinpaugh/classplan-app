@@ -108,6 +108,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     view: any
   }) {
     // tippy(data.el)
+    this.log('eventRender', data.event, data.el);
   }
 
   protected getCalendarHeaderConfig() {

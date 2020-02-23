@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {AbstractService} from '../abstract-service';
 import {merge, Observable} from 'rxjs';
 import {BasicObject, Dictionary} from '../../interfaces/dictionary';
-import {ApiGetBlockAwareInstructorList, InstructorFetchAllParams} from './instructor.interfaces';
+import {ApiGetBlockAwareInstructorList} from './instructor.interfaces';
 import {map, tap, toArray} from 'rxjs/operators';
 import {BlockObject} from '../term/term.interfaces';
 
@@ -15,16 +15,25 @@ export class InstructorService extends AbstractService {
     super();
   }
 
+  /**
+   * Fetch all the known instructors.
+   */
   fetchAll(): Observable<BasicObject[]> {
     return this.doFetchAll(`instructors.json`);
   }
 
+  /**
+   * Fetch all the known instructors and filter by the provided blocks / subjects.
+   *
+   * @param blocks
+   * @param subjects
+   */
   fetchAllByBlock(blocks: BlockObject[], subjects?: BlockObject[]): Observable<BasicObject[]> {
     const requests = [];
 
     blocks.forEach(block => {
       if (!subjects || !subjects.length) {
-        requests.push(this.doFetchAll<ApiGetBlockAwareInstructorList>(`term/${block.id}/subject/0/instructors.json`));
+        requests.push(this.doFetchAll<ApiGetBlockAwareInstructorList>(`term/${block.id}/instructors.json`));
         return;
       }
 

@@ -12,10 +12,18 @@ export class TermService extends AbstractService {
     super();
   }
 
+  /**
+   * Fetch all the term objects.
+   */
   fetchAll(): Observable<ApiGetTermCollection> {
     return this.doFetchAll('terms.json');
   }
 
+  /**
+   * Fetch a single (full) term object.
+   *
+   * @param id
+   */
   fetch(id: number): Observable<ApiGetTerm> {
     return this.doFetch(`term/${id}.json`);
   }

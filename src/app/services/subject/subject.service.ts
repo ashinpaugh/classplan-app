@@ -18,10 +18,19 @@ export class SubjectService extends AbstractService {
     super();
   }
 
+  /**
+   * Fetch all the subjects.
+   */
   fetchAll(): Observable<BasicObject[]> {
     return this.doFetchAll(`subjects.json`);
   }
 
+  /**
+   * Fetch all the subjects taught in a term.
+   *
+   * @param block
+   * @param blockKey
+   */
   fetchAllByBlock(
     block: BlockObject | BlockObject[],
     blockKey: keyof BlockObject = 'name',
@@ -40,6 +49,12 @@ export class SubjectService extends AbstractService {
     ;
   }
 
+  /**
+   * Fetch all the subjects taught by an instructor for the given term(s).
+   *
+   * @param blocks
+   * @param instructors
+   */
   fetchByInstructor(blocks: BasicObject[], instructors: BasicObject[]): Observable<BasicObject[]> {
     const fetchArr = [];
 
@@ -57,6 +72,13 @@ export class SubjectService extends AbstractService {
     ;
   }
 
+  /**
+   * Normalize the subjects that are returned by this service.
+   *
+   * @param block
+   * @param subjects
+   * @param blockKey
+   */
   protected mapSubject(block: BlockObject, subjects: BasicObject[], blockKey: keyof BlockObject = 'name') {
     return subjects.map(subject => {
       subject.meta = block[blockKey];

@@ -2,7 +2,6 @@ import {AbstractLoggable} from '../classes/abstract-loggable';
 import {from, Observable, of} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {mergeMap, tap} from 'rxjs/operators';
-import {Dictionary} from '../interfaces/dictionary';
 
 
 export interface ApiParams {
@@ -20,13 +19,15 @@ export abstract class AbstractService extends AbstractLoggable {
     this.apiTracker = new Map<string, object>();
   }
 
-  protected doFetchAll<T>(uri: string, requestInit: RequestInit = {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    }
-  }): Observable<T> {
+  /**
+   * Fetch a batch of objects and perform param serialization and page caching.
+   *
+   * @param uri
+   * @param params
+   * @param requestInit
+   */
+  protected doFetchAll<T>(uri: string, params?: ApiParams, requestInit?: RequestInit): Observable<T> {
+    requestInit = this.getRequestInit(params, requestInit);
 
     if (this.apiTracker.has(uri)) {
       return of(this.apiTracker.get(uri) as T);
@@ -43,13 +44,15 @@ export abstract class AbstractService extends AbstractLoggable {
     ;
   }
 
-  protected doFetch<T>(uri: string, requestInit: RequestInit = {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    }
-  }): Observable<T> {
+  /**
+   * Fetch a single instance of an object and perform param serialization and page caching.
+   *
+   * @param uri
+   * @param params
+   * @param requestInit
+   */
+  protected doFetch<T>(uri: string, params?: ApiParams, requestInit?: RequestInit): Observable<T> {
+    requestInit = this.getRequestInit(params, requestInit);
 
     if (this.apiTracker.has(uri)) {
       return of(this.apiTracker.get(uri) as T);
@@ -66,7 +69,49 @@ export abstract class AbstractService extends AbstractLoggable {
     ;
   }
 
-  protected createRequestBody(params: ApiParams): string {
+  /**
+   * Modify / create the request object passed into a request.
+   *
+   * @param params    Params to include in the query / body of the request.
+   * @param overrides The request init params to override.
+   */
+  protected getRequestInit(params: ApiParams, overrides?: RequestInit): RequestInit {
+    const request = Object.assign(this.getDefaultRequestInit(), overrides || {});
+    const hasParams = !!params && Object.keys(params).length > 0;
+    const contentType = request.headers['Content-Type'];
+
+    if (hasParams && !request.body) {
+      if ('application/json' === contentType) {
+        request.body = JSON.stringify(params);
+      } else if ('application/x-www-form-urlencoded' === contentType) {
+        request.body = this.createFormBody(params);
+      } else {
+        throw new Error('Unsupported content type: ' + contentType);
+      }
+    }
+
+    return request;
+  }
+
+  /**
+   * Get the default request init settings for the fetch() api.
+   */
+  protected getDefaultRequestInit(): RequestInit {
+    return {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    };
+  }
+
+  /**
+   * Be sure to set the Content-Type: application/x-www-form-urlencoded
+   *
+   * @param params
+   */
+  protected createFormBody(params: ApiParams): string {
     const body = [];
 
     Object.keys(params).forEach(key => {
@@ -80,22 +125,6 @@ export abstract class AbstractService extends AbstractLoggable {
     });
 
     return body.join('&');
-  }
-
-  protected normalizeParams(params): string {
-    let normalized = '';
-
-    for (const param in params) {
-      const item = params[param];
-
-      if (!params.hasOwnProperty(param) || !item || !item.length) {
-        continue;
-      }
-
-      normalized += item.map(value => (!normalized ? '' : '&') + `${param}[]=${value}`);
-    }
-
-    return normalized;
   }
 
 }

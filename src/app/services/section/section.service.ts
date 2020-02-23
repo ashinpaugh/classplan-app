@@ -14,24 +14,21 @@ export class SectionService extends AbstractService {
     super();
   }
 
+  /**
+   * Find all the sections matching the provided filter criteria.
+   *
+   * @param params
+   */
   fetchAll(params: SectionFetchAllParams): Observable<SectionObject[]> {
-    const uri = 'section/find.json';
-    // const strParams = this.normalizeParams(params);
-    const strParams = this.createRequestBody(params);
-    const keyStore = `${uri}?${strParams}`;
+    const uri       = 'section/find.json';
+    const strParams = this.createFormBody(params);
+    const keyStore  = `${uri}?${strParams}`;
 
     if (this.apiTracker.has(keyStore)) {
       return of(this.apiTracker.get(keyStore));
     }
 
-    return this.doFetchAll<{sections: SectionObject[]}>(uri, {
-      method: 'POST',
-      body: strParams,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': "application/x-www-form-urlencoded"
-      }
-    })
+    return this.doFetchAll<{sections: SectionObject[]}>(uri, params, {method: 'POST'})
       .pipe(
         map(response => response.sections),
         tap((sections: SectionObject[]) => {
@@ -43,16 +40,27 @@ export class SectionService extends AbstractService {
     ;
   }
 
+  /**
+   * Fetch the response for the export view button.
+   *
+   * @param filters
+   */
   getExportStream(filters: SectionFetchAllParams): Promise<Response> {
     return fetch(environment.apiUrl + 'download', {
       method: 'POST',
-      body: this.createRequestBody(filters),
+      body: this.createFormBody(filters),
       headers: new Headers({
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       })
     });
   }
 
+  /**
+   * Inline the export view response for download.
+   *
+   * @param response
+   * @param defaultFilename
+   */
   async handleStreamDownload(response: Response, defaultFilename: string = 'classplan-export.csv') {
     if (!response.ok || response.status !== 200) {
       return;

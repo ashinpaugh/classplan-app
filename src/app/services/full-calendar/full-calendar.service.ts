@@ -42,6 +42,11 @@ export class FullCalendarService extends AbstractLoggable {
     super();
   }
 
+  /**
+   * Fetch all the sections based on the provided filter criteria and map them to FullCalendar Event Objects.
+   *
+   * @param params
+   */
   fetchAll(params: SectionFetchAllParams): Observable<EventObject[]> {
     return this.sections.fetchAll(params)
       .pipe(
@@ -91,6 +96,11 @@ export class FullCalendarService extends AbstractLoggable {
     return format(new Date(startParam(sortedSections[0])));
   }
 
+  /**
+   * Take a section and map it to a FullCalendar Event Object.
+   *
+   * @param section
+   */
   protected formatSourceToEvent(section: SectionObject): EventObject {
     const isAllDay = this.isAllDay(section);
     const event = {
@@ -116,6 +126,12 @@ export class FullCalendarService extends AbstractLoggable {
     return event;
   }
 
+  /**
+   * Map a section's day strings to FC event days.
+   *
+   * @param section
+   * @param isAllDay
+   */
   protected getDays(section: SectionObject, isAllDay?: boolean): number[] {
     const days = section.days;
     const dow  = ['U', 'M', 'T', 'W', 'R', 'F', 'S'];
