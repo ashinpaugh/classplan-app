@@ -2,4 +2,37 @@ classplan-calendar {
   div.ou-calendar {
     margin: 32px;
   }
+
+  div.tippy-tooltip {
+    color: #000;
+    background-color: #FFF;
+
+    div.cp-tooltip-content {
+      display: flex;
+      flex-direction: column;
+      width: 275px;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .bold, .body .label {
+        font-weight: bold;
+      }
+
+      .body {
+        .label {
+          width: 33%;
+        }
+
+        .value {
+          text-align: start;
+        }
+      }
+    }
+  }
 }

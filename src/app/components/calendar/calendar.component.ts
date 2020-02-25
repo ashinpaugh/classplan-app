@@ -1,4 +1,15 @@
-import {ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef, EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import {FullCalendarComponent} from '@fullcalendar/angular';
 import {PluginDef} from "@fullcalendar/core/plugin-system";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -6,10 +17,10 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import tippy from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
-import {SectionFetchAllParams} from '../../services/section/section.interfaces';
-import {BehaviorSubject, Observable, of} from 'rxjs';
-import {switchMap, takeUntil, tap} from 'rxjs/operators';
+import {SectionFetchAllParams, SectionObject} from '../../services/section/section.interfaces';
 import {SearchFilters} from '../search-modal/search-modal.component';
+import {BehaviorSubject, Observable, of} from 'rxjs';
+import {share, switchMap, takeUntil, tap} from 'rxjs/operators';
 
 /**
  * @see https://fullcalendar.io/docs/header
@@ -45,17 +56,20 @@ export interface CalendarHeader {
 export class CalendarComponent extends AbstractComponent implements OnInit, OnChanges {
 
   @ViewChild(FullCalendarComponent, { static: true }) refFullCalendar: FullCalendarComponent;
+  @ViewChild('toolTip', { static: true, read: ElementRef }) refTooltip: ElementRef;
 
   @Input() plugins: PluginDef[];
   @Input() header: CalendarHeader;
-  @Input() events: EventObject[];
   @Input() filters: SectionFetchAllParams;
   @Input() allDaySlot: boolean = true;
+
+  @Output() events: EventEmitter<EventObject[]>;
 
   events$: Observable<EventObject[]>;
   filters$: BehaviorSubject<SectionFetchAllParams>;
 
   constructor(
+    protected elementRef: ElementRef,
     protected fullcalendar: FullCalendarService,
   ) {
     super();
@@ -64,6 +78,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     this.plugins = [dayGridPlugin, timeGridPlugin];
 
     this.filters$ = new BehaviorSubject<SectionFetchAllParams>(undefined);
+    this.events   = new EventEmitter<EventObject[]>();
   }
 
   ngOnInit() {
@@ -85,7 +100,13 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           this.refFullCalendar.getApi().gotoDate(startDate);
         }),
         takeUntil(this.ngUnsubscribe$),
+        share(),
       )
+    ;
+
+    this.events$
+      .pipe(takeUntil(this.ngUnsubscribe$))
+      .subscribe(events => this.events.next(events))
     ;
   }
 
@@ -107,8 +128,15 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     isEnd: boolean,
     view: any
   }) {
-    // tippy(data.el)
-    this.log('eventRender', data.event, data.el);
+    tippy(data.el, {
+      allowHTML: true,
+      content: this.createTooltipContent(data.event.extendedProps.section),
+      appendTo: this.elementRef.nativeElement,
+      lazy: true,
+      maxWidth: 360,
+    });
+
+    return data.el;
   }
 
   protected getCalendarHeaderConfig() {
@@ -117,6 +145,54 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       center: 'title',
       right: 'timeGridWeek,timeGridDay',
     };
+  }
+
+  protected createTooltipContent(section: SectionObject): string {
+    let days = `
+      <div class="row">
+        <span class="label">Days:</span>
+        <span class="value">${section.days}</span>
+      </div>
+    `;
+
+    if (!section.days) {
+      days = '';
+    }
+
+    return `
+      <div class="cp-tooltip-content">
+        <div class="header">
+          <div class="row">
+            <span class="bold">${section.subject.name} ${section.course.number}: ${section.number}</span>
+            <span class="spacer"></span>
+            <span class="bold">${section.num_enrolled} / ${section.maximum_enrollment}</span>
+          </div>
+
+          <span class="spacer"></span>
+
+          <div class="bold">${section.course.name}</div>
+        </div>
+
+        <div class="body">
+          <hr>
+          <div class="row">
+            <span class="label">Location:</span>
+            <div class="value">
+              ${section.campus.name}
+              <br/>
+              ${section.building.name} - ${section.room.number}
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="label">Instructor:</span>
+            <span class="value">${section.instructor.name}</span>
+          </div>
+
+          ${days}
+        </div>
+      </div>
+    `;
   }
 
 }
