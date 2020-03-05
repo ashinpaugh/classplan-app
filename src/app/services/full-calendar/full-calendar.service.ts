@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import {AbstractLoggable} from '../../classes/abstract-loggable';
 import {SectionService} from '../section/section.service';
 import {SectionFetchAllParams, SectionObject} from '../section/section.interfaces';
-import {Dictionary} from '../../interfaces/dictionary';
+import {BasicObject, Dictionary} from '../../interfaces/dictionary';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
+import {CalendarColorMatrix} from '../../components/search-modal/search-modal.component';
 
 // @see https://fullcalendar.io/docs/event-object
 export interface EventObject {
@@ -36,6 +37,8 @@ export interface EventObject {
 })
 export class FullCalendarService extends AbstractLoggable {
 
+  protected defaultEventColor = '#001505';
+
   constructor(
     protected sections: SectionService,
   ) {
@@ -46,14 +49,15 @@ export class FullCalendarService extends AbstractLoggable {
    * Fetch all the sections based on the provided filter criteria and map them to FullCalendar Event Objects.
    *
    * @param params
+   * @param colors
    */
-  fetchAll(params: SectionFetchAllParams): Observable<EventObject[]> {
+  fetchAll(params: SectionFetchAllParams, colors: CalendarColorMatrix): Observable<EventObject[]> {
     return this.sections.fetchAll(params)
       .pipe(
         map(sections => {
           return sections
             .filter(section => params.showOnline || (!params.showOnline && !this.isOnline(section)))
-            .map(section => this.formatSourceToEvent(section))
+            .map(section => this.formatSourceToEvent(colors, section))
           ;
         }),
       )
@@ -97,11 +101,40 @@ export class FullCalendarService extends AbstractLoggable {
   }
 
   /**
+   * Get the color value for an event.
+   *
+   * @param matrix
+   * @param section
+   * @param defaultColor
+   */
+  getColor(matrix: CalendarColorMatrix, section, defaultColor = this.defaultEventColor): string {
+    let collection;
+
+    collection = matrix.instructors;
+    if (!!collection && collection.hasOwnProperty(section.instructor.id)) {
+      return collection[section.instructor.id];
+    }
+
+    collection = matrix.subjects;
+    if (!!collection && collection.hasOwnProperty(section.subject.id)) {
+      return collection[section.subject.id];
+    }
+
+    collection = matrix.blocks;
+    if (!!collection && collection.hasOwnProperty(section.block.id)) {
+      return collection[section.block.id];
+    }
+
+    return defaultColor;
+  }
+
+  /**
    * Take a section and map it to a FullCalendar Event Object.
    *
+   * @param colors
    * @param section
    */
-  protected formatSourceToEvent(section: SectionObject): EventObject {
+  protected formatSourceToEvent(colors: CalendarColorMatrix, section: SectionObject): EventObject {
     const isAllDay = this.isAllDay(section);
     const event = {
       id: section.id,
@@ -110,7 +143,8 @@ export class FullCalendarService extends AbstractLoggable {
       daysOfWeek: this.getDays(section, isAllDay),
       extendedProps: {
         section: section,
-      }
+      },
+      backgroundColor: this.getColor(colors, section),
     } as EventObject;
 
     if (!isAllDay) {

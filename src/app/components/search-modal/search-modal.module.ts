@@ -11,6 +11,7 @@ import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatListModule} from '@angular/material/list';
+import {ColorGithubModule} from 'ngx-color/github';
 
 
 @NgModule({
@@ -29,6 +30,7 @@ import {MatListModule} from '@angular/material/list';
     NgSelectModule,
     MatCheckboxModule,
     MatListModule,
+    ColorGithubModule,
   ],
   bootstrap: [SearchModalComponent],
   exports: [SearchModalComponent],

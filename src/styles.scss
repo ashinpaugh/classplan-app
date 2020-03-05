@@ -11,7 +11,13 @@ span.spacer {
   flex: 1 1 auto;
 }
 
-[hidden], [hidden="true"] {
+.ellipses {
+  text-overflow: ellipsis;
+}
+
+.hidden,
+[hidden],
+[hidden="true"] {
   display: none !important;
 }
 

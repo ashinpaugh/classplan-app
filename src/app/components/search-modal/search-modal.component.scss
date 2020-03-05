@@ -1,5 +1,17 @@
 classplan-search-modal {
 
+  .tippy-popper {
+    pointer-events: all !important;
+
+    .tippy-tooltip {
+      background-color: #FFF;
+    }
+  }
+
+  color-github {
+    z-index: 100000;
+  }
+
   mat-card {
     display: flex !important;
     flex-direction: column;
@@ -22,9 +34,19 @@ classplan-search-modal {
           display: flex;
           flex-direction: row;
 
+          /*div.row {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+          }*/
+
           ng-select {
             width: 75%;
             min-width: 180px;
+
+            .ng-select-label {
+              cursor: context-menu;
+            }
           }
         }
       }

@@ -18,7 +18,7 @@
         ngDefaultControl
         color="primary"
         [value]="'showAllDay'"
-        [selected]="(advanced$ | async).showAllDay"
+        [selected]="(Filter$ | async).advanced.showAllDay"
         [(ngModel)]="showAllDay"
       >
         Show All Day:
@@ -28,8 +28,8 @@
         ngDefaultControl
         color="primary"
         [value]="'showOnline'"
-        [disabled]="!(advanced$ | async).showAllDay"
-        [selected]="(advanced$ | async).showOnline"
+        [disabled]="!(Filter$ | async).advanced.showAllDay"
+        [selected]="(Filter$ | async).advanced.showOnline"
         [(ngModel)]="showOnline"
       >
         Show Online:
@@ -42,6 +42,14 @@
   <ng-container *ngTemplateOutlet="tplActions"></ng-container>
 
 </mat-card>
+
+<div class="color-container" hidden>
+  <color-github
+    #colorPallet
+    triangle="hide"
+    (click)="onClickStopBubble($event)"
+  ></color-github>
+</div>
 
 
 <ng-template #tplFields>
@@ -75,10 +83,38 @@
         placeholder="Chose a Block"
         bindValue="id"
         bindLabel="name"
+        [searchable]="false"
         [multiple]="true"
         [clearable]="true"
         [items]="blocks$ | async"
-      ></ng-select>
+      >
+        <ng-template ng-header-tmp>
+          <input
+            placeholder="Search..."
+            style="width: 100%; line-height: 24px"
+            type="text"
+            (input)="refBlockSearch.filter($event.target.value)"
+          />
+        </ng-template>
+
+        <ng-template ng-label-tmp let-item="item">
+          <span
+            aria-hidden="true"
+            class="ng-value-icon left ng-star-inserted"
+            (click)="ngSelectDeselectItem(refBlockSearch, item)"
+          >×</span>
+
+          <span
+            id="blocks-{{item.id}}"
+            class="ng-select-label"
+            (mousedown)="ngOptionLabelClick($event, 'blocks', item, colorPallet)"
+          >
+            {{item.name}}
+          </span>
+        </ng-template>
+
+      </ng-select>
+
     </mat-grid-tile>
 
     <mat-grid-tile
@@ -97,11 +133,44 @@
         groupBy="meta"
         bindValue="id"
         bindLabel="name"
+        [searchable]="false"
         [virtualScroll]="true"
         [multiple]="true"
         [clearable]="true"
         [items]="subjects$ | async"
-      ></ng-select>
+      >
+        <ng-template ng-header-tmp>
+          <input
+            placeholder="Search..."
+            style="width: 100%; line-height: 24px"
+            type="text"
+            (input)="refBlockSearch.filter($event.target.value)"
+          />
+        </ng-template>
+
+        <ng-template ng-label-tmp let-item="item">
+            <span
+              aria-hidden="true"
+              class="ng-value-icon left ng-star-inserted"
+              (click)="ngSelectDeselectItem(refSubjectSearch, item)"
+            >×</span>
+
+          <span
+            id="subjects-{{item.id}}"
+            class="ng-select-label"
+            (mousedown)="ngOptionLabelClick($event, 'subjects', item, colorPallet)"
+          >
+              {{item.name}}
+            </span>
+        </ng-template>
+
+      </ng-select>
+
+      <!--<div class="row">
+        <mat-checkbox labelPosition="before">
+          Filter subjects by selected instructors
+        </mat-checkbox>
+      </div>-->
     </mat-grid-tile>
 
     <mat-grid-tile
@@ -120,11 +189,39 @@
         groupBy="meta"
         bindValue="id"
         bindLabel="name"
+        [searchable]="false"
         [virtualScroll]="true"
         [multiple]="true"
         [clearable]="true"
         [items]="instructors$ | async"
-      ></ng-select>
+      >
+
+        <ng-template ng-header-tmp>
+          <input
+            placeholder="Search..."
+            style="width: 100%; line-height: 24px"
+            type="text"
+            (input)="refBlockSearch.filter($event.target.value)"
+          />
+        </ng-template>
+
+        <ng-template ng-label-tmp let-item="item">
+          <span
+            aria-hidden="true"
+            class="ng-value-icon left ng-star-inserted"
+            (click)="ngSelectDeselectItem(refInstructorSearch, item)"
+          >×</span>
+
+          <span
+            id="instructors-{{item.id}}"
+            class="ng-select-label"
+            (mousedown)="ngOptionLabelClick($event, 'instructors', item, colorPallet)"
+          >
+            {{item.name}}
+          </span>
+        </ng-template>
+
+      </ng-select>
     </mat-grid-tile>
 
   </mat-grid-list>

@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
-import {SearchModalComponent} from './components/search-modal/search-modal.component';
+import {AdvancedFilters, SearchModalComponent} from './components/search-modal/search-modal.component';
 import {CalendarComponent} from './components/calendar/calendar.component';
 import {SectionFetchAllParams} from './services/section/section.interfaces';
 import {SectionService} from './services/section/section.service';
@@ -18,7 +18,7 @@ export class AppComponent implements OnInit {
 
   @ViewChild(CalendarComponent, { static: true }) refCalendar: CalendarComponent;
 
-  filters$: BehaviorSubject<SectionFetchAllParams>;
+  filters$: BehaviorSubject<AdvancedFilters>;
 
   noFilters$: Observable<boolean>;
   noEvents$: Observable<boolean>;
@@ -27,7 +27,7 @@ export class AppComponent implements OnInit {
     protected dialog: MatDialog,
     protected sections: SectionService,
   ) {
-    this.filters$ = new BehaviorSubject<SectionFetchAllParams>(undefined);
+    this.filters$ = new BehaviorSubject<AdvancedFilters>(undefined);
   }
 
   ngOnInit(): void {
@@ -52,18 +52,20 @@ export class AppComponent implements OnInit {
         take(1),
         filter(data => !!data),
       )
-      .subscribe((data: {filters: SectionFetchAllParams}) => this.filters$.next(data.filters))
+      .subscribe((data: {filters: AdvancedFilters}) => this.filters$.next(data.filters))
     ;
   }
 
   downloadExport(): void {
-    this.sections.getExportStream(this.filters$.getValue())
+    const parsedFilters = SearchModalComponent.filtersToSectionParams(this.filters$.getValue());
+
+    this.sections.getExportStream(parsedFilters)
       .then(async response => await this.sections.handleStreamDownload(response))
     ;
   }
 
   clearFiltersAndEvents(): void {
-    SearchModalComponent.lastFilters = undefined;
+    SearchModalComponent.filters$ = undefined;
 
     this.filters$.next(undefined);
   }

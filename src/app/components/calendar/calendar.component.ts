@@ -18,9 +18,9 @@ import tippy from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionFetchAllParams, SectionObject} from '../../services/section/section.interfaces';
-import {SearchFilters} from '../search-modal/search-modal.component';
+import {AdvancedFilters, SearchModalComponent} from '../search-modal/search-modal.component';
 import {BehaviorSubject, Observable, of} from 'rxjs';
-import {share, switchMap, takeUntil, tap} from 'rxjs/operators';
+import {filter, share, switchMap, takeUntil, tap} from 'rxjs/operators';
 
 /**
  * @see https://fullcalendar.io/docs/header
@@ -60,13 +60,13 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   @Input() plugins: PluginDef[];
   @Input() header: CalendarHeader;
-  @Input() filters: SectionFetchAllParams;
+  @Input() filters: AdvancedFilters;
   @Input() allDaySlot: boolean = true;
 
   @Output() events: EventEmitter<EventObject[]>;
 
   events$: Observable<EventObject[]>;
-  filters$: BehaviorSubject<SectionFetchAllParams>;
+  filters$: BehaviorSubject<AdvancedFilters>;
 
   constructor(
     protected elementRef: ElementRef,
@@ -77,19 +77,22 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     this.header = this.getCalendarHeaderConfig();
     this.plugins = [dayGridPlugin, timeGridPlugin];
 
-    this.filters$ = new BehaviorSubject<SectionFetchAllParams>(undefined);
+    this.filters$ = new BehaviorSubject<AdvancedFilters>(undefined);
     this.events   = new EventEmitter<EventObject[]>();
   }
 
   ngOnInit() {
     this.events$ = this.filters$.asObservable()
       .pipe(
-        switchMap((filters: SectionFetchAllParams) => {
-          if (!filters || !filters.block) {
+        filter(payload => !!payload),
+        switchMap((filters: AdvancedFilters) => {
+          if (!filters.blocks || !filters.blocks.length) {
             return of([]);
           }
 
-          return this.fullcalendar.fetchAll(filters);
+          const params = SearchModalComponent.filtersToSectionParams(filters);
+
+          return this.fullcalendar.fetchAll(params, filters.advanced.colors);
         }),
         tap((events: EventObject[]) => {
           if (!events || !events.length) {
@@ -113,7 +116,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   ngOnChanges(changes: SimpleChanges): void {
     if ('filters' in changes) {
       if (!!changes.filters.currentValue && !!changes.filters.currentValue.advanced) {
-        this.allDaySlot = (changes.filters.currentValue as SearchFilters).advanced.showAllDay;
+        this.allDaySlot = (changes.filters.currentValue as AdvancedFilters).advanced.showAllDay;
       }
 
       this.filters$.next(changes.filters.currentValue);
@@ -133,7 +136,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       content: this.createTooltipContent(data.event.extendedProps.section),
       appendTo: this.elementRef.nativeElement,
       lazy: true,
-      maxWidth: 360,
+      maxWidth: 320,
     });
 
     return data.el;
@@ -186,7 +189,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
           <div class="row">
             <span class="label">Instructor:</span>
-            <span class="value">${section.instructor.name}</span>
+            <span class="value ellipses">${section.instructor.name}</span>
           </div>
 
           ${days}
