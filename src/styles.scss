@@ -25,6 +25,14 @@ span.spacer {
   padding-bottom: 0;
 }
 
+.tippy-popper {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+mat-dialog-container.mat-dialog-container {
+  overflow: hidden;
+}
+
 /*.no-scroll {
   overflow: hidden;
 

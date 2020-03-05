@@ -2,10 +2,9 @@ import {ChangeDetectionStrategy, Component, OnInit, ViewChild, ViewEncapsulation
 import {MatDialog} from '@angular/material/dialog';
 import {AdvancedFilters, SearchModalComponent} from './components/search-modal/search-modal.component';
 import {CalendarComponent} from './components/calendar/calendar.component';
-import {SectionFetchAllParams} from './services/section/section.interfaces';
 import {SectionService} from './services/section/section.service';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {filter, map, take} from 'rxjs/operators';
+import {filter, map, startWith, take} from 'rxjs/operators';
 
 @Component({
   selector: 'classplan-root',
@@ -36,15 +35,20 @@ export class AppComponent implements OnInit {
     ;
 
     this.noEvents$ = this.refCalendar.events.asObservable()
-      .pipe(map(events => !events || !events.length))
+      .pipe(
+        map(events => !events || !events.length),
+        startWith(true),
+      )
     ;
   }
 
   openSearch(): void {
     const searchModal = this.dialog.open<SearchModalComponent>(SearchModalComponent, {
+      position: {top: '5vh'},
       width: '50%',
       minHeight: 560,
-      position: {top: '10vh'},
+      minWidth: 325,
+      height: 'auto',
     });
 
     searchModal.afterClosed()
@@ -57,9 +61,7 @@ export class AppComponent implements OnInit {
   }
 
   downloadExport(): void {
-    const parsedFilters = SearchModalComponent.filtersToSectionParams(this.filters$.getValue());
-
-    this.sections.getExportStream(parsedFilters)
+    this.sections.getExportStream(this.filters$.getValue())
       .then(async response => await this.sections.handleStreamDownload(response))
     ;
   }

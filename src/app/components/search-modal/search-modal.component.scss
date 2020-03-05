@@ -12,40 +12,61 @@ classplan-search-modal {
     z-index: 100000;
   }
 
-  mat-card {
+  mat-card.mat-card {
     display: flex !important;
     flex-direction: column;
     height: fit-content;
-    min-height: 560px;
+    min-height: 550px;
+    padding: 8px;
 
     mat-card-header {
       .mat-card-header-text {
-        margin: 0 4px;
+        margin: 0;
       }
     }
 
     mat-card-content {
       mat-grid-list {
-        // min-height: 420px;
-        margin: 0 16px;
+        margin: 0 4px;
 
         mat-grid-tile.mat-grid-tile {
           overflow: visible;
           display: flex;
           flex-direction: row;
 
-          /*div.row {
+          --label-padding: 8px;
+
+          h4 {
+            width: 80px;
+            margin-right: var(--label-padding);
+          }
+
+          &.has-checkbox figure {
+            flex-direction: column;
+          }
+
+          div.row {
             width: 100%;
             display: flex;
-            flex-direction: column;
-          }*/
+            flex-direction: row;
+
+            &.checkbox {
+              justify-content: flex-end;
+            }
+          }
 
           ng-select {
-            width: 75%;
-            min-width: 180px;
+            width: calc(70% - var(--label-padding));
+            // 16 = left / right mat-card padding.
+            min-width: min(175px, calc(70% - var(--label-padding) - 16px));
 
             .ng-select-label {
               cursor: context-menu;
+            }
+
+            &.ng-select.ng-select-multiple .ng-select-container.ng-has-value .ng-value-container {
+              padding-top: 0;
+              border-top: 1.5em solid transparent;
             }
           }
         }

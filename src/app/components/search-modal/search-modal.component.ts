@@ -1,5 +1,6 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Inject, Input, QueryList, ViewChild, ViewChildren, ViewEncapsulation} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {MatCheckbox, MatCheckboxChange} from '@angular/material/checkbox';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {GithubComponent} from 'ngx-color/github';
 import {ColorEvent} from 'ngx-color';
@@ -11,11 +12,11 @@ import {AbstractComponent} from '../abstract-component';
 import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
 import {SectionService} from '../../services/section/section.service';
-import {SectionFetchAllParams} from '../../services/section/section.interfaces';
+import {DomUtil} from '../../classes/tools/dom.util';
 import {BehaviorSubject, combineLatest, Observable, of, Subject, timer} from 'rxjs';
 import {concatMap, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
-import {DomUtil} from '../../classes/tools/dom.util';
+
 
 export interface CalendarColorMatrix {
   blocks: Dictionary<ColorEvent>;
@@ -32,9 +33,9 @@ export interface SearchFilters {
 
 export interface AdvancedFilters extends SearchFilters {
   advanced: {
+    colors: CalendarColorMatrix;
     showAllDay: boolean;
     showOnline: boolean;
-    colors: CalendarColorMatrix;
   };
 }
 
@@ -55,6 +56,8 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   @ViewChild('refSubjectSearch', { static: false }) refSubject: NgSelectComponent;
   @ViewChild('refInstructorSearch', { static: false }) refInstructor: NgSelectComponent;
   @ViewChild('colorPallet', { static: true, read: ElementRef }) refColor: ElementRef;
+  @ViewChild('chkFilterSubjectsByInstructors', { static: false }) refChkSubjectsByInstructors: MatCheckbox;
+  @ViewChild('chkFilterInstructorsBySubjects', { static: false }) refChkInstructorsBySubject: MatCheckbox;
 
   disableSearch$: Observable<boolean>;
   terms$: Observable<TermObject[]>;
@@ -108,22 +111,6 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     const filters = this.Filters;
     filters.advanced.showOnline = show;
     this.Filters = filters;
-  }
-
-  /**
-   * TODO: Move?
-   * @param filters
-   */
-  static filtersToSectionParams(filters?: AdvancedFilters): SectionFetchAllParams {
-    filters = !!filters ? filters : SearchModalComponent.filters$.getValue();
-
-    return {
-      block: filters.blocks.map(block => block.id),
-      subject: filters.subjects.map(subject => subject.id),
-      instructor: filters.instructors.map(instructor => instructor.id),
-      showAllDay: Number(filters.advanced.showAllDay),
-      showOnline: Number(filters.advanced.showOnline),
-    };
   }
 
   protected init(reset?: boolean): void {
@@ -190,11 +177,12 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     this.subjects$ = combineLatest([
       this.refBlock.changeEvent,
       this.refInstructor.changeEvent.pipe(startWith(undefined)),
+      this.refChkSubjectsByInstructors.change.pipe(startWith(false)),
     ])
       .pipe(
         // tap(value => this.log('subjects -> peak', value)),
-        switchMap((results: [BlockObject[], BasicObject[]]) => {
-          const [blocks, instructors] = results;
+        switchMap((results: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
+          const [blocks, instructors, filterByInstructors] = results;
 
           if (!blocks || !blocks.length) {
             this.ngSelectClear(this.refSubject);
@@ -202,7 +190,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
             return of(undefined);
           }
 
-          if (!instructors || !instructors.length) {
+          if (!instructors || !instructors.length || !filterByInstructors.checked) {
             return this.subjects.fetchAllByBlock(blocks);
           }
 
@@ -216,11 +204,12 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     this.instructors$ = combineLatest([
       this.refBlock.changeEvent,
       this.refSubject.changeEvent.pipe(startWith(undefined)),
+      this.refChkInstructorsBySubject.change.pipe(startWith(false)),
     ])
       .pipe(
         // tap(results => this.log('instructors$ -> peak', results)),
-        switchMap((data: [BlockObject[], BasicObject[]]) => {
-          const [blocks, subjects] = data;
+        switchMap((data: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
+          const [blocks, subjects, filterBySubjects] = data;
 
           if (!blocks || !blocks.length) {
             this.ngSelectClear(this.refInstructor);
@@ -228,7 +217,9 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
             return of(undefined);
           }
 
-          return this.instructors.fetchAllByBlock(blocks, subjects);
+          const subjectsPayload = !filterBySubjects.checked ? undefined : subjects;
+
+          return this.instructors.fetchAllByBlock(blocks, subjectsPayload);
         }),
         tap(instructors => this.log('instructors$', instructors)),
         share(),
@@ -300,7 +291,6 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       delay: [null, 5000],
       appendTo: this.elementRef.nativeElement,
       onHidden: (instance) => {
-        this.log('ngOptionLabelClick -> hidden', instance);
         onDestroy$.next();
         onDestroy$.complete();
 
@@ -329,7 +319,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
 
   onClickStopBubble(event: MouseEvent) {
     this.log('onClickStopBubble', event);
-    event.stopPropagation();
+    // event.stopPropagation();
   }
 
   protected setFilters() {
@@ -379,9 +369,9 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       subjects: this.refSubject.selectedValues as BasicObject[],
       instructors: this.refInstructor.selectedValues as BasicObject[],
       advanced: {
+        colors: this.Filters.advanced.colors,
         showAllDay: this.showAllDay,
         showOnline: this.showOnline,
-        colors: this.Filters.advanced.colors,
       },
     };
   }

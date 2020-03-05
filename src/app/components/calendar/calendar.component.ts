@@ -1,15 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef, EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-  ViewChild,
-  ViewEncapsulation
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation} from '@angular/core';
 import {FullCalendarComponent} from '@fullcalendar/angular';
 import {PluginDef} from "@fullcalendar/core/plugin-system";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -17,8 +6,8 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import tippy from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
-import {SectionFetchAllParams, SectionObject} from '../../services/section/section.interfaces';
-import {AdvancedFilters, SearchModalComponent} from '../search-modal/search-modal.component';
+import {SectionObject} from '../../services/section/section.interfaces';
+import {AdvancedFilters} from '../search-modal/search-modal.component';
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {filter, share, switchMap, takeUntil, tap} from 'rxjs/operators';
 
@@ -90,9 +79,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
             return of([]);
           }
 
-          const params = SearchModalComponent.filtersToSectionParams(filters);
-
-          return this.fullcalendar.fetchAll(params, filters.advanced.colors);
+          return this.fullcalendar.fetchAll(filters, filters.advanced.colors);
         }),
         tap((events: EventObject[]) => {
           if (!events || !events.length) {

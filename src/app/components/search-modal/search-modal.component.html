@@ -1,45 +1,24 @@
 
 <mat-card>
   <mat-card-header>
-    <mat-card-title>
+    <mat-card-subtitle>
       Search Filters
-    </mat-card-title>
+    </mat-card-subtitle>
   </mat-card-header>
 
   <mat-card-content>
     <ng-container *ngTemplateOutlet="tplFields"></ng-container>
 
-    <mat-selection-list
-      #refAdvancedOptions
-      [hidden]="undefined == ((instructors$ | async) || (subjects$ | async))"
-      (selectionChange)="advancedChanged($event)"
-    >
-      <mat-list-option
-        ngDefaultControl
-        color="primary"
-        [value]="'showAllDay'"
-        [selected]="(Filter$ | async).advanced.showAllDay"
-        [(ngModel)]="showAllDay"
-      >
-        Show All Day:
-      </mat-list-option>
-
-      <mat-list-option
-        ngDefaultControl
-        color="primary"
-        [value]="'showOnline'"
-        [disabled]="!(Filter$ | async).advanced.showAllDay"
-        [selected]="(Filter$ | async).advanced.showOnline"
-        [(ngModel)]="showOnline"
-      >
-        Show Online:
-      </mat-list-option>
-    </mat-selection-list>
+    <ng-container *ngTemplateOutlet="tplAdvancedFields; context: {
+      hidden: undefined == ((instructors$ | async) || (subjects$ | async))
+    }"></ng-container>
   </mat-card-content>
 
   <span class="spacer"></span>
 
-  <ng-container *ngTemplateOutlet="tplActions"></ng-container>
+  <mat-card-actions align="end">
+    <ng-container *ngTemplateOutlet="tplActions"></ng-container>
+  </mat-card-actions>
 
 </mat-card>
 
@@ -53,7 +32,7 @@
 
 
 <ng-template #tplFields>
-  <mat-grid-list cols="12" rowHeight="75px">
+  <mat-grid-list cols="12" rowHeight="100px" gutterSize="5px">
 
     <mat-grid-tile id="semester-container" colspan="12" style="height: 75px;">
       <h4>Semester:</h4>
@@ -120,108 +99,136 @@
     <mat-grid-tile
       id="subject-container"
       colspan="12"
+      class="has-checkbox"
       [hidden]="undefined == (subjects$ | async)"
     >
-      <h4>Subjects:</h4>
+      <div id="subject-first-row" class="row">
+        <h4>Subjects:</h4>
 
-      <span class="spacer"></span>
+        <span class="spacer"></span>
 
-      <ng-select
-        #refSubjectSearch
-        appendTo="#subject-container"
-        placeholder="Chose a Subject"
-        groupBy="meta"
-        bindValue="id"
-        bindLabel="name"
-        [searchable]="false"
-        [virtualScroll]="true"
-        [multiple]="true"
-        [clearable]="true"
-        [items]="subjects$ | async"
-      >
-        <ng-template ng-header-tmp>
-          <input
-            placeholder="Search..."
-            style="width: 100%; line-height: 24px"
-            type="text"
-            (input)="refBlockSearch.filter($event.target.value)"
-          />
-        </ng-template>
+        <ng-select
+          #refSubjectSearch
+          appendTo="#subject-first-row"
+          placeholder="Chose a Subject"
+          groupBy="meta"
+          bindValue="id"
+          bindLabel="name"
+          [searchable]="false"
+          [virtualScroll]="true"
+          [multiple]="true"
+          [clearable]="true"
+          [items]="subjects$ | async"
+        >
+          <ng-template ng-header-tmp>
+            <input
+              placeholder="Search..."
+              style="width: 100%; line-height: 24px"
+              type="text"
+              (input)="refBlockSearch.filter($event.target.value)"
+            />
+          </ng-template>
 
-        <ng-template ng-label-tmp let-item="item">
+          <ng-template ng-label-tmp let-item="item">
             <span
               aria-hidden="true"
               class="ng-value-icon left ng-star-inserted"
               (click)="ngSelectDeselectItem(refSubjectSearch, item)"
             >×</span>
 
-          <span
-            id="subjects-{{item.id}}"
-            class="ng-select-label"
-            (mousedown)="ngOptionLabelClick($event, 'subjects', item, colorPallet)"
-          >
+            <span
+              id="subjects-{{item.id}}"
+              class="ng-select-label"
+              (mousedown)="ngOptionLabelClick($event, 'subjects', item, colorPallet)"
+            >
               {{item.name}}
             </span>
-        </ng-template>
+          </ng-template>
 
-      </ng-select>
+        </ng-select>
+      </div>
 
-      <!--<div class="row">
-        <mat-checkbox labelPosition="before">
-          Filter subjects by selected instructors
+      <div
+        class="row checkbox"
+        [hidden]="(refInstructorSearch.selectedValues)?.length == 0"
+      >
+        <mat-checkbox
+          #chkFilterSubjectsByInstructors
+          labelPosition="before"
+          color="primary"
+        >
+          Filter by selected instructors
         </mat-checkbox>
-      </div>-->
+      </div>
     </mat-grid-tile>
 
     <mat-grid-tile
       id="instructor-container"
       colspan="12"
+      class="has-checkbox"
       [hidden]="undefined == (instructors$ | async)"
     >
-      <h4>Instructors:</h4>
+      <div id="instructor-first-row" class="row">
+        <h4>Instructors:</h4>
 
-      <span class="spacer"></span>
+        <span class="spacer"></span>
 
-      <ng-select
-        #refInstructorSearch
-        appendTo="#instructor-container"
-        placeholder="Chose a Instructor"
-        groupBy="meta"
-        bindValue="id"
-        bindLabel="name"
-        [searchable]="false"
-        [virtualScroll]="true"
-        [multiple]="true"
-        [clearable]="true"
-        [items]="instructors$ | async"
+        <ng-select
+          #refInstructorSearch
+          appendTo="#instructor-first-row"
+          placeholder="Chose a Instructor"
+          groupBy="meta"
+          bindValue="id"
+          bindLabel="name"
+          dropdownPosition="auto"
+          [searchable]="false"
+          [virtualScroll]="true"
+          [multiple]="true"
+          [clearable]="true"
+          [items]="instructors$ | async"
+        >
+
+          <ng-template ng-header-tmp>
+            <input
+              placeholder="Search..."
+              style="width: 100%; line-height: 24px"
+              type="text"
+              (input)="refBlockSearch.filter($event.target.value)"
+            />
+          </ng-template>
+
+          <ng-template ng-label-tmp let-item="item">
+            <span
+              aria-hidden="true"
+              class="ng-value-icon left ng-star-inserted"
+              (click)="ngSelectDeselectItem(refInstructorSearch, item)"
+            >×</span>
+
+            <span
+              id="instructors-{{item.id}}"
+              class="ng-select-label"
+              (mousedown)="ngOptionLabelClick($event, 'instructors', item, colorPallet)"
+            >
+              {{item.name}}
+            </span>
+          </ng-template>
+
+        </ng-select>
+      </div>
+
+      <div
+        class="row checkbox"
+        [hidden]="(refSubjectSearch.selectedValues)?.length == 0"
       >
-
-        <ng-template ng-header-tmp>
-          <input
-            placeholder="Search..."
-            style="width: 100%; line-height: 24px"
-            type="text"
-            (input)="refBlockSearch.filter($event.target.value)"
-          />
-        </ng-template>
-
-        <ng-template ng-label-tmp let-item="item">
-          <span
-            aria-hidden="true"
-            class="ng-value-icon left ng-star-inserted"
-            (click)="ngSelectDeselectItem(refInstructorSearch, item)"
-          >×</span>
-
-          <span
-            id="instructors-{{item.id}}"
-            class="ng-select-label"
-            (mousedown)="ngOptionLabelClick($event, 'instructors', item, colorPallet)"
-          >
-            {{item.name}}
-          </span>
-        </ng-template>
-
-      </ng-select>
+        <mat-checkbox
+          #chkFilterInstructorsBySubjects
+          labelPosition="before"
+          color="primary"
+          [checked]="true"
+        >
+          Filter by selected subjects
+        </mat-checkbox>
+      </div>
     </mat-grid-tile>
 
   </mat-grid-list>
@@ -229,26 +236,66 @@
 
 
 
+<ng-template #tplAdvancedFields let-hidden="hidden">
+
+  <mat-expansion-panel [hidden]="hidden">
+
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Advanced Filters
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <mat-selection-list
+      #refAdvancedOptions
+      [hidden]="hidden"
+      (selectionChange)="advancedChanged($event)"
+    >
+      <mat-list-option
+        ngDefaultControl
+        color="primary"
+        [value]="'showAllDay'"
+        [selected]="(Filter$ | async).advanced.showAllDay"
+        [(ngModel)]="showAllDay"
+      >
+        Show All Day:
+      </mat-list-option>
+
+      <mat-list-option
+        ngDefaultControl
+        color="primary"
+        [value]="'showOnline'"
+        [disabled]="!(Filter$ | async).advanced.showAllDay"
+        [selected]="(Filter$ | async).advanced.showOnline"
+        [(ngModel)]="showOnline"
+      >
+        Show Online:
+      </mat-list-option>
+    </mat-selection-list>
+
+  </mat-expansion-panel>
+
+</ng-template>
+
+
 
 <ng-template #tplActions>
-  <mat-card-actions align="start">
-    <button mat-button color="accent" (click)="close()">
-      Close
-    </button>
+  <button mat-button color="accent" (click)="close()">
+    Close
+  </button>
 
-    <button mat-button color="accent" (click)="clearFilters()">
-      Clear
-    </button>
+  <button mat-button color="accent" (click)="clearFilters()">
+    Clear
+  </button>
 
-    <span class="spacer"></span>
+  <span class="spacer"></span>
 
-    <button
-      mat-button
-      color="primary"
-      [disabled]="disableSearch$ | async"
-      (click)="sendSearchFilters()"
-    >
-      Search
-    </button>
-  </mat-card-actions>
+  <button
+    mat-button
+    color="primary"
+    [disabled]="disableSearch$ | async"
+    (click)="sendSearchFilters()"
+  >
+    Search
+  </button>
 </ng-template>

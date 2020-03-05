@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import {AbstractLoggable} from '../../classes/abstract-loggable';
 import {SectionService} from '../section/section.service';
-import {SectionFetchAllParams, SectionObject} from '../section/section.interfaces';
-import {BasicObject, Dictionary} from '../../interfaces/dictionary';
+import {SectionObject} from '../section/section.interfaces';
+import {Dictionary} from '../../interfaces/dictionary';
+import {AdvancedFilters, CalendarColorMatrix} from '../../components/search-modal/search-modal.component';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
-import {CalendarColorMatrix} from '../../components/search-modal/search-modal.component';
 
 // @see https://fullcalendar.io/docs/event-object
 export interface EventObject {
@@ -37,7 +37,7 @@ export interface EventObject {
 })
 export class FullCalendarService extends AbstractLoggable {
 
-  protected defaultEventColor = '#001505';
+  protected defaultEventColor = '#3f51b5';
 
   constructor(
     protected sections: SectionService,
@@ -48,10 +48,12 @@ export class FullCalendarService extends AbstractLoggable {
   /**
    * Fetch all the sections based on the provided filter criteria and map them to FullCalendar Event Objects.
    *
-   * @param params
+   * @param filters
    * @param colors
    */
-  fetchAll(params: SectionFetchAllParams, colors: CalendarColorMatrix): Observable<EventObject[]> {
+  fetchAll(filters: AdvancedFilters, colors: CalendarColorMatrix): Observable<EventObject[]> {
+    const params = this.sections.filtersToSectionParams(filters);
+
     return this.sections.fetchAll(params)
       .pipe(
         map(sections => {

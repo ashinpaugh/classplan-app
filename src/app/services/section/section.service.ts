@@ -4,6 +4,7 @@ import {SectionFetchAllParams, SectionObject} from './section.interfaces';
 import {Observable, of} from 'rxjs';
 import {map, tap} from 'rxjs/operators';
 import {environment} from '../../../environments/environment';
+import {AdvancedFilters} from '../../components/search-modal/search-modal.component';
 
 @Injectable({
   providedIn: 'root'
@@ -45,10 +46,12 @@ export class SectionService extends AbstractService {
    *
    * @param filters
    */
-  getExportStream(filters: SectionFetchAllParams): Promise<Response> {
+  getExportStream(filters: AdvancedFilters): Promise<Response> {
+    const params = this.filtersToSectionParams(filters);
+
     return fetch(environment.apiUrl + 'download', {
       method: 'POST',
-      body: this.createFormBody(filters),
+      body: this.createFormBody(params),
       headers: new Headers({
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
       })
@@ -81,5 +84,20 @@ export class SectionService extends AbstractService {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  /**
+   * Convert the SearchModal filters to API params.
+   *
+   * @param filters
+   */
+  filtersToSectionParams(filters: AdvancedFilters): SectionFetchAllParams {
+    return {
+      block: filters.blocks.map(block => block.id),
+      subject: filters.subjects.map(subject => subject.id),
+      instructor: filters.instructors.map(instructor => instructor.id),
+      showAllDay: Number(filters.advanced.showAllDay),
+      showOnline: Number(filters.advanced.showOnline),
+    };
   }
 }
