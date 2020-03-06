@@ -1,7 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import "assets/material/material-styles";
-// @import "~@ng-select/ng-select/themes/default.theme.css";
 @import "~@ng-select/ng-select/themes/material.theme.css";
 @import "~@fullcalendar/core/main.css";
 @import "~@fullcalendar/daygrid/main.css";
@@ -15,9 +14,7 @@ span.spacer {
   text-overflow: ellipsis;
 }
 
-.hidden,
-[hidden],
-[hidden="true"] {
+.hidden, [hidden], [hidden="true"] {
   display: none !important;
 }
 
@@ -30,7 +27,7 @@ span.spacer {
 }
 
 mat-dialog-container.mat-dialog-container {
-  overflow: hidden;
+  overflow: visible;
 }
 
 /*.no-scroll {

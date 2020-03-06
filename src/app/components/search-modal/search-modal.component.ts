@@ -13,9 +13,10 @@ import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
 import {SectionService} from '../../services/section/section.service';
 import {DomUtil} from '../../classes/tools/dom.util';
-import {BehaviorSubject, combineLatest, Observable, of, Subject, timer} from 'rxjs';
+import {BehaviorSubject, combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
 import {concatMap, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
+import {MatExpansionPanel} from '@angular/material/expansion';
 
 
 export interface CalendarColorMatrix {
@@ -36,6 +37,10 @@ export interface AdvancedFilters extends SearchFilters {
     colors: CalendarColorMatrix;
     showAllDay: boolean;
     showOnline: boolean;
+    xref: {
+      subjects: boolean;
+      instructors: boolean;
+    }
   };
 }
 
@@ -51,6 +56,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   static filters$: BehaviorSubject<AdvancedFilters>;
 
   @ViewChildren(NgSelectComponent) ngSelects: QueryList<NgSelectComponent>;
+  @ViewChild(MatExpansionPanel, { static: false }) refAdvancedFiltersPanel: MatExpansionPanel;
   @ViewChild('refTermSearch', { static: false }) refTerm: NgSelectComponent;
   @ViewChild('refBlockSearch', { static: false }) refBlock: NgSelectComponent;
   @ViewChild('refSubjectSearch', { static: false }) refSubject: NgSelectComponent;
@@ -169,7 +175,13 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       .pipe(
         // tap(term => this.log('blocks$ -> peak', term)),
         map((term: TermObject) => term && term.blocks),
-        tap(blocks => this.log('blocks$', blocks)),
+        tap(blocks => {
+          this.log('blocks$', blocks);
+
+          if (blocks && !!blocks.length) {
+            this.refTerm.blur();
+          }
+        }),
         shareReplay(1),
       )
     ;
@@ -177,7 +189,12 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     this.subjects$ = combineLatest([
       this.refBlock.changeEvent,
       this.refInstructor.changeEvent.pipe(startWith(undefined)),
-      this.refChkSubjectsByInstructors.change.pipe(startWith(false)),
+      this.refChkSubjectsByInstructors.change.pipe(
+        startWith({
+          source: this.refChkSubjectsByInstructors,
+          checked: this.refChkSubjectsByInstructors.checked,
+        }),
+      ),
     ])
       .pipe(
         // tap(value => this.log('subjects -> peak', value)),
@@ -204,10 +221,15 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     this.instructors$ = combineLatest([
       this.refBlock.changeEvent,
       this.refSubject.changeEvent.pipe(startWith(undefined)),
-      this.refChkInstructorsBySubject.change.pipe(startWith(false)),
+      this.refChkInstructorsBySubject.change.pipe(
+        startWith({
+          source: this.refChkInstructorsBySubject,
+          checked: this.refChkInstructorsBySubject.checked,
+        }),
+      ),
     ])
       .pipe(
-        // tap(results => this.log('instructors$ -> peak', results)),
+        tap(results => this.log('instructors$ -> peak', results)),
         switchMap((data: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
           const [blocks, subjects, filterBySubjects] = data;
 
@@ -217,9 +239,10 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
             return of(undefined);
           }
 
-          const subjectsPayload = !filterBySubjects.checked ? undefined : subjects;
-
-          return this.instructors.fetchAllByBlock(blocks, subjectsPayload);
+          return this.instructors.fetchAllByBlock(
+            blocks,
+            !filterBySubjects.checked ? undefined : subjects
+          );
         }),
         tap(instructors => this.log('instructors$', instructors)),
         share(),
@@ -227,9 +250,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     ;
 
     DomUtil.watch$(this.elementRef.nativeElement, {childList: true, subtree: true})
-      .pipe(
-        takeUntil(this.ngUnsubscribe$),
-      )
+      .pipe(takeUntil(this.ngUnsubscribe$))
       .subscribe(records => this.setLabelColor(records))
     ;
 
@@ -277,9 +298,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   ngOptionLabelClick(event: MouseEvent, type: string, optionValue, colorPallet: GithubComponent) {
     this.log('ngOptionLabelClick', event, optionValue);
 
-    // event.preventDefault();
     event.stopPropagation();
-    // event.stopImmediatePropagation();
 
     const onDestroy$ = new Subject();
 
@@ -317,11 +336,6 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     ;
   }
 
-  onClickStopBubble(event: MouseEvent) {
-    this.log('onClickStopBubble', event);
-    // event.stopPropagation();
-  }
-
   protected setFilters() {
     const termOption = this.refTerm.itemsList
       .findByLabel(this.Filters.term.name)
@@ -333,6 +347,12 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
 
     this.showAllDay = this.Filters.advanced.showAllDay;
     this.showOnline = this.Filters.advanced.showOnline;
+
+    this.openAdvancedPanelOnSetFilter();
+
+    this.refChkSubjectsByInstructors.checked = this.Filters.advanced.xref.subjects;
+    this.refChkInstructorsBySubject.checked  = this.Filters.advanced.xref.instructors;
+
     this.refTerm.select(termOption);
 
     const syncFilterWithSelect = (
@@ -362,6 +382,20 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
     syncFilterWithSelect(this.refInstructor, this.instructors$, this.Filters.instructors);
   }
 
+  protected openAdvancedPanelOnSetFilter(): void {
+    if (this.showAllDay && this.showOnline) {
+      return;
+    }
+
+    merge(this.refSubject.changeEvent, this.refInstructor.changeEvent)
+      .pipe(
+        switchMap(() => timer(325)),
+        take(1),
+      )
+      .subscribe(() => this.refAdvancedFiltersPanel.open())
+    ;
+  }
+
   protected getFilters(): AdvancedFilters {
     return {
       term: this.refTerm.selectedValues[0] as TermObject,
@@ -372,6 +406,10 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
         colors: this.Filters.advanced.colors,
         showAllDay: this.showAllDay,
         showOnline: this.showOnline,
+        xref: {
+          subjects: this.refChkSubjectsByInstructors.checked,
+          instructors: this.refChkInstructorsBySubject.checked,
+        }
       },
     };
   }

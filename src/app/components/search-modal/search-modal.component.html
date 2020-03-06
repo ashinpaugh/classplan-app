@@ -1,17 +1,15 @@
 
 <mat-card>
   <mat-card-header>
-    <mat-card-subtitle>
-      Search Filters
-    </mat-card-subtitle>
+    <mat-card-title>
+      Filters
+    </mat-card-title>
   </mat-card-header>
 
   <mat-card-content>
     <ng-container *ngTemplateOutlet="tplFields"></ng-container>
 
-    <ng-container *ngTemplateOutlet="tplAdvancedFields; context: {
-      hidden: undefined == ((instructors$ | async) || (subjects$ | async))
-    }"></ng-container>
+    <ng-container *ngTemplateOutlet="tplAdvancedFields"></ng-container>
   </mat-card-content>
 
   <span class="spacer"></span>
@@ -26,22 +24,18 @@
   <color-github
     #colorPallet
     triangle="hide"
-    (click)="onClickStopBubble($event)"
   ></color-github>
 </div>
 
 
 <ng-template #tplFields>
-  <mat-grid-list cols="12" rowHeight="100px" gutterSize="5px">
+  <mat-list>
 
-    <mat-grid-tile id="semester-container" colspan="12" style="height: 75px;">
-      <h4>Semester:</h4>
-
-      <span class="spacer"></span>
+    <mat-list-item id="semester-container">
 
       <ng-select
         #refTermSearch
-        appendTo="#semester-container"
+        appendTo="#semester-container .mat-list-item-content"
         placeholder="Chose a Semester"
         bindValue="id"
         bindLabel="name"
@@ -49,16 +43,16 @@
         [clearable]="true"
         [items]="terms$ | async"
       ></ng-select>
-    </mat-grid-tile>
+    </mat-list-item>
 
-    <mat-grid-tile id="block-container" colspan="12" [hidden]="undefined == (blocks$ | async)">
-      <h4>Term Block:</h4>
-
-      <span class="spacer"></span>
+    <mat-list-item
+      id="block-container"
+      [hidden]="undefined == (blocks$ | async)"
+    >
 
       <ng-select
         #refBlockSearch
-        appendTo="#block-container"
+        appendTo="#block-container .mat-list-item-content"
         placeholder="Chose a Block"
         bindValue="id"
         bindLabel="name"
@@ -70,8 +64,8 @@
         <ng-template ng-header-tmp>
           <input
             placeholder="Search..."
-            style="width: 100%; line-height: 24px"
             type="text"
+            class="ng-select-search"
             (input)="refBlockSearch.filter($event.target.value)"
           />
         </ng-template>
@@ -94,18 +88,14 @@
 
       </ng-select>
 
-    </mat-grid-tile>
+    </mat-list-item>
 
-    <mat-grid-tile
+    <mat-list-item
       id="subject-container"
-      colspan="12"
       class="has-checkbox"
       [hidden]="undefined == (subjects$ | async)"
     >
-      <div id="subject-first-row" class="row">
-        <h4>Subjects:</h4>
-
-        <span class="spacer"></span>
+      <div matLine id="subject-first-row" class="row">
 
         <ng-select
           #refSubjectSearch
@@ -123,8 +113,8 @@
           <ng-template ng-header-tmp>
             <input
               placeholder="Search..."
-              style="width: 100%; line-height: 24px"
               type="text"
+              class="ng-select-search"
               (input)="refBlockSearch.filter($event.target.value)"
             />
           </ng-template>
@@ -149,29 +139,27 @@
       </div>
 
       <div
+        matLine
         class="row checkbox"
-        [hidden]="(refInstructorSearch.selectedValues)?.length == 0"
+        [hidden]="refInstructorSearch.selectedValues?.length == 0"
       >
         <mat-checkbox
           #chkFilterSubjectsByInstructors
           labelPosition="before"
           color="primary"
+          checked="{{(Filter$ | async)?.advanced?.xref?.subjects}}"
         >
           Filter by selected instructors
         </mat-checkbox>
       </div>
-    </mat-grid-tile>
+    </mat-list-item>
 
-    <mat-grid-tile
+    <mat-list-item
       id="instructor-container"
-      colspan="12"
       class="has-checkbox"
       [hidden]="undefined == (instructors$ | async)"
     >
-      <div id="instructor-first-row" class="row">
-        <h4>Instructors:</h4>
-
-        <span class="spacer"></span>
+      <div matLine id="instructor-first-row" class="row">
 
         <ng-select
           #refInstructorSearch
@@ -191,8 +179,8 @@
           <ng-template ng-header-tmp>
             <input
               placeholder="Search..."
-              style="width: 100%; line-height: 24px"
               type="text"
+              class="ng-select-search"
               (input)="refBlockSearch.filter($event.target.value)"
             />
           </ng-template>
@@ -217,40 +205,39 @@
       </div>
 
       <div
+        matLine
         class="row checkbox"
-        [hidden]="(refSubjectSearch.selectedValues)?.length == 0"
+        [hidden]="refSubjectSearch.selectedValues?.length == 0"
       >
         <mat-checkbox
           #chkFilterInstructorsBySubjects
           labelPosition="before"
           color="primary"
-          [checked]="true"
+          checked="{{(Filter$ | async)?.advanced?.xref?.instructors || true}}"
         >
           Filter by selected subjects
         </mat-checkbox>
       </div>
-    </mat-grid-tile>
+    </mat-list-item>
 
-  </mat-grid-list>
+  </mat-list>
 </ng-template>
 
 
 
 <ng-template #tplAdvancedFields let-hidden="hidden">
 
-  <mat-expansion-panel [hidden]="hidden">
+  <mat-expansion-panel
+    [hidden]="undefined == ((instructors$ | async) || (subjects$ | async))"
+  >
 
     <mat-expansion-panel-header>
       <mat-panel-title>
-        Advanced Filters
+        Advanced
       </mat-panel-title>
     </mat-expansion-panel-header>
 
-    <mat-selection-list
-      #refAdvancedOptions
-      [hidden]="hidden"
-      (selectionChange)="advancedChanged($event)"
-    >
+    <mat-selection-list (selectionChange)="advancedChanged($event)">
       <mat-list-option
         ngDefaultControl
         color="primary"

@@ -73,9 +73,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   ngOnInit() {
     this.events$ = this.filters$.asObservable()
       .pipe(
-        filter(payload => !!payload),
         switchMap((filters: AdvancedFilters) => {
-          if (!filters.blocks || !filters.blocks.length) {
+          if (!filters || !filters.blocks || !filters.blocks.length) {
             return of([]);
           }
 
