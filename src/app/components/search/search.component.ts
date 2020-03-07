@@ -1,10 +1,11 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Inject, Input, QueryList, ViewChild, ViewChildren, ViewEncapsulation} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {MatCheckbox, MatCheckboxChange} from '@angular/material/checkbox';
+import {MatExpansionPanel} from '@angular/material/expansion';
+import {MatSelectionListChange} from '@angular/material/list';
 import {NgSelectComponent} from '@ng-select/ng-select';
 import {GithubComponent} from 'ngx-color/github';
 import {ColorEvent} from 'ngx-color';
-import {MatSelectionListChange} from '@angular/material/list';
 import {TermService} from '../../services/term/term.service';
 import {BlockObject, TermObject} from '../../services/term/term.interfaces';
 import {BasicObject, Dictionary} from '../../interfaces/dictionary';
@@ -16,7 +17,6 @@ import {DomUtil} from '../../classes/tools/dom.util';
 import {BehaviorSubject, combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
 import {concatMap, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
-import {MatExpansionPanel} from '@angular/material/expansion';
 
 
 export interface CalendarColorMatrix {
@@ -45,13 +45,13 @@ export interface AdvancedFilters extends SearchFilters {
 }
 
 @Component({
-  selector: 'classplan-search-modal',
-  templateUrl: './search-modal.component.html',
-  styleUrls: ['./search-modal.component.scss'],
+  selector: 'classplan-search',
+  templateUrl: './search.component.html',
+  styleUrls: ['./search.component.scss'],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchModalComponent extends AbstractComponent implements AfterViewInit {
+export class SearchComponent extends AbstractComponent implements AfterViewInit {
 
   static filters$: BehaviorSubject<AdvancedFilters>;
 
@@ -74,7 +74,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: SearchFilters,
     protected elementRef: ElementRef,
-    protected dialogRef: MatDialogRef<SearchModalComponent>,
+    protected dialogRef: MatDialogRef<SearchComponent>,
     protected terms: TermService,
     protected subjects: SubjectService,
     protected instructors: InstructorService,
@@ -86,15 +86,15 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   }
 
   get Filters(): AdvancedFilters {
-    return SearchModalComponent.filters$.getValue();
+    return SearchComponent.filters$.getValue();
   }
 
   set Filters(filters: AdvancedFilters) {
-    SearchModalComponent.filters$.next(filters);
+    SearchComponent.filters$.next(filters);
   }
 
   get Filter$() {
-    return SearchModalComponent.filters$.asObservable();
+    return SearchComponent.filters$.asObservable();
   }
 
   get showAllDay() {
@@ -132,7 +132,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       },
     } as AdvancedFilters;
 
-    if (!!SearchModalComponent.filters$) {
+    if (!!SearchComponent.filters$) {
       if (reset) {
         this.Filters = defaultFilters;
       }
@@ -140,7 +140,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
       return;
     }
 
-    SearchModalComponent.filters$ = new BehaviorSubject<AdvancedFilters>(defaultFilters);
+    SearchComponent.filters$ = new BehaviorSubject<AdvancedFilters>(defaultFilters);
   }
 
   ngAfterViewInit(): void {
@@ -277,7 +277,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   }
 
   sendSearchFilters() {
-    // Set the filters for reference when the modal is re-opened.
+    // Set the filters for reference when the search component is re-opened.
     this.Filters = this.getFilters();
 
     this.dialogRef.close({
@@ -431,7 +431,7 @@ export class SearchModalComponent extends AbstractComponent implements AfterView
   }
 
   /**
-   * Sets the last known color for a selected label if the modal is closed and reopened.
+   * Sets the last known color for a selected label if the search component is closed and reopened.
    *
    * @param records
    */

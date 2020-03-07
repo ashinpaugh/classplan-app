@@ -8,7 +8,7 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialogModule} from '@angular/material/dialog';
-import {SearchModalComponentModule} from './components/search-modal/search-modal.module';
+import {SearchComponentModule} from './components/search/search.module';
 import {CalendarComponentModule} from './components/calendar/calendar.module';
 
 @NgModule({
@@ -23,7 +23,7 @@ import {CalendarComponentModule} from './components/calendar/calendar.module';
     MatButtonModule,
     MatDialogModule,
 
-    SearchModalComponentModule,
+    SearchComponentModule,
     CalendarComponentModule,
   ],
   providers: [],

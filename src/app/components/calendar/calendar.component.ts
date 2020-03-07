@@ -7,7 +7,7 @@ import tippy from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionObject} from '../../services/section/section.interfaces';
-import {AdvancedFilters} from '../search-modal/search-modal.component';
+import {AdvancedFilters} from '../search/search.component';
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {filter, share, switchMap, takeUntil, tap} from 'rxjs/operators';
 

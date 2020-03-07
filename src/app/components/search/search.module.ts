@@ -1,5 +1,5 @@
 import {NgModule} from '@angular/core';
-import {SearchModalComponent} from './search-modal.component';
+import {SearchComponent} from './search.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
@@ -17,7 +17,7 @@ import {MatExpansionModule} from '@angular/material/expansion';
 
 @NgModule({
   declarations: [
-    SearchModalComponent
+    SearchComponent
   ],
   imports: [
     CommonModule,
@@ -34,7 +34,7 @@ import {MatExpansionModule} from '@angular/material/expansion';
     ColorGithubModule,
     MatExpansionModule,
   ],
-  bootstrap: [SearchModalComponent],
-  exports: [SearchModalComponent],
+  bootstrap: [SearchComponent],
+  exports: [SearchComponent],
 })
-export class SearchModalComponentModule { }
+export class SearchComponentModule { }

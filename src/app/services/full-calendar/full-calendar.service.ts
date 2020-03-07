@@ -3,7 +3,7 @@ import {AbstractLoggable} from '../../classes/abstract-loggable';
 import {SectionService} from '../section/section.service';
 import {SectionObject} from '../section/section.interfaces';
 import {Dictionary} from '../../interfaces/dictionary';
-import {AdvancedFilters, CalendarColorMatrix} from '../../components/search-modal/search-modal.component';
+import {AdvancedFilters, CalendarColorMatrix} from '../../components/search/search.component';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 

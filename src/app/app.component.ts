@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
-import {AdvancedFilters, SearchModalComponent} from './components/search-modal/search-modal.component';
+import {AdvancedFilters, SearchComponent} from './components/search/search.component';
 import {CalendarComponent} from './components/calendar/calendar.component';
 import {SectionService} from './services/section/section.service';
 import {BehaviorSubject, Observable} from 'rxjs';
@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
   }
 
   openSearch(): void {
-    const searchModal = this.dialog.open<SearchModalComponent>(SearchModalComponent, {
+    const searchModal = this.dialog.open<SearchComponent>(SearchComponent, {
       position: {top: '5vh'},
       width: '50%',
       minHeight: 560,
@@ -67,7 +67,7 @@ export class AppComponent implements OnInit {
   }
 
   clearFiltersAndEvents(): void {
-    SearchModalComponent.filters$ = undefined;
+    SearchComponent.filters$ = undefined;
 
     this.filters$.next(undefined);
   }

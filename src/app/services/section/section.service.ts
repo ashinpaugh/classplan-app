@@ -4,7 +4,7 @@ import {SectionFetchAllParams, SectionObject} from './section.interfaces';
 import {Observable, of} from 'rxjs';
 import {map, tap} from 'rxjs/operators';
 import {environment} from '../../../environments/environment';
-import {AdvancedFilters} from '../../components/search-modal/search-modal.component';
+import {AdvancedFilters} from '../../components/search/search.component';
 
 @Injectable({
   providedIn: 'root'
@@ -87,7 +87,7 @@ export class SectionService extends AbstractService {
   }
 
   /**
-   * Convert the SearchModal filters to API params.
+   * Convert the search component filters to API params.
    *
    * @param filters
    */
