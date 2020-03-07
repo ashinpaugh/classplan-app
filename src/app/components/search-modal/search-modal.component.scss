@@ -75,11 +75,6 @@ classplan-search-modal {
                 cursor: context-menu;
               }
 
-              .ng-select-search {
-                width: 100%;
-                line-height: 24px;
-              }
-
               .ng-placeholder {
                 overflow: hidden;
                 max-width: 90%;
@@ -89,6 +84,13 @@ classplan-search-modal {
               &.ng-select.ng-select-multiple .ng-select-container.ng-has-value .ng-value-container {
                 padding-top: 0;
                 border-top: 1.5em solid transparent;
+              }
+            }
+
+            ng-dropdown-panel {
+              .ng-select-search {
+                width: 100%;
+                line-height: 24px;
               }
             }
 

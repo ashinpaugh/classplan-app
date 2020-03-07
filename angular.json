@@ -34,8 +34,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
-              "./node_modules/tippy.js/dist/tippy.css"
+              "src/styles.scss"
             ],
             "scripts": []
           },
@@ -50,7 +49,7 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
+              "extractCss": false,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,

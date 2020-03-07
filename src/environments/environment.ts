@@ -4,7 +4,8 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://classplan.ou.test/',
+  // apiUrl: 'http://classplan.ou.test/',
+  apiUrl: window.location.href,
 };
 
 /*
