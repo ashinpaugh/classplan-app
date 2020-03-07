@@ -3,7 +3,7 @@ import {FullCalendarComponent} from '@fullcalendar/angular';
 import {PluginDef} from "@fullcalendar/core/plugin-system";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import tippy from 'tippy.js';
+import tippy, {hideAll} from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionObject} from '../../services/section/section.interfaces';
@@ -123,6 +123,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       appendTo: this.elementRef.nativeElement,
       lazy: true,
       maxWidth: 320,
+      onShow: () => hideAll({duration: 0}),
     });
 
     return data.el;
