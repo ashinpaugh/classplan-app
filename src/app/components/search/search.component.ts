@@ -15,7 +15,7 @@ import {InstructorService} from '../../services/instructor/instructor.service';
 import {SectionService} from '../../services/section/section.service';
 import {DomUtil} from '../../classes/tools/dom.util';
 import {BehaviorSubject, combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
-import {concatMap, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {concatMap, debounceTime, filter, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
 
 
@@ -178,9 +178,12 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         tap(blocks => {
           this.log('blocks$', blocks);
 
-          if (blocks && !!blocks.length) {
-            this.refTerm.blur();
+          if (!blocks || !blocks.length) {
+            return;
           }
+
+          // Hide the blinking cursor in the semester label.
+          this.refTerm.blur();
         }),
         shareReplay(1),
       )
@@ -247,6 +250,23 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         tap(instructors => this.log('instructors$', instructors)),
         share(),
       )
+    ;
+
+    // Auto-select the Full Semester block.
+    this.blocks$
+      .pipe(
+        debounceTime(100),
+        map(blocks => blocks.find(block => 'Full Semester' === block.name)),
+        filter(fullSemester => !!fullSemester),
+        takeUntil(this.ngUnsubscribe$),
+      )
+      .subscribe(fullSemester => {
+        const ngOption = this.refBlock.itemsList.findItem(fullSemester.id);
+
+        if (ngOption) {
+          this.refBlock.select(ngOption);
+        }
+      })
     ;
 
     DomUtil.watch$(this.elementRef.nativeElement, {childList: true, subtree: true})
