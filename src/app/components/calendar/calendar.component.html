@@ -5,6 +5,7 @@
     minTime="08:00:00"
     maxTime="22:00:00"
     contentHeight="auto"
+    [columnHeaderFormat]="{ weekday: 'short' }"
     [startParam]="null"
     [endParam]="null"
     [lazyFetching]="true"
@@ -13,6 +14,8 @@
     [plugins]="plugins"
     [header]="header"
     [events]="events$ | async"
+    (viewSkeletonRender)="calendarRendered($event)"
     (eventRender)="eventRender($event)"
+    (datesRender)="datesRendered($event)"
   ></full-calendar>
 </div>

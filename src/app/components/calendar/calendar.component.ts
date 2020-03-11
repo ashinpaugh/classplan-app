@@ -9,7 +9,7 @@ import {EventObject, FullCalendarService} from '../../services/full-calendar/ful
 import {SectionObject} from '../../services/section/section.interfaces';
 import {AdvancedFilters} from '../search/search.component';
 import {BehaviorSubject, Observable, of} from 'rxjs';
-import {filter, share, switchMap, takeUntil, tap} from 'rxjs/operators';
+import {shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 
 /**
  * @see https://fullcalendar.io/docs/header
@@ -80,22 +80,23 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
           return this.fullcalendar.fetchAll(filters, filters.advanced.colors);
         }),
-        tap((events: EventObject[]) => {
-          if (!events || !events.length) {
-            return;
-          }
-
-          const startDate = this.fullcalendar.getEarliestSectionStart(events);
-          this.refFullCalendar.getApi().gotoDate(startDate);
-        }),
         takeUntil(this.ngUnsubscribe$),
-        share(),
+        shareReplay(1),
       )
     ;
 
     this.events$
       .pipe(takeUntil(this.ngUnsubscribe$))
-      .subscribe(events => this.events.next(events))
+      .subscribe(events => {
+        this.events.next(events);
+
+        if (!events || !events.length) {
+          return;
+        }
+
+        const startDate = this.fullcalendar.getEarliestSectionStart(events);
+        this.refFullCalendar.getApi().gotoDate(startDate);
+      })
     ;
   }
 
@@ -109,6 +110,20 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     }
   }
 
+  /**
+   * Fired after the calendar dom renders.
+   *
+   * @param event
+   */
+  calendarRendered(event: {view: any, el: HTMLElement}): void {
+    this.setTitle('');
+  }
+
+  /**
+   * Fired before an event is rendered.
+   *
+   * @param data
+   */
   eventRender(data: {
     event: EventObject,
     el: HTMLElement,
@@ -127,6 +142,26 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     });
 
     return data.el;
+  }
+
+  /**
+   * Override the FC toolbar title.
+   *
+   * There is currently no API to support changing this dynamically.
+   *
+   * @param data
+   */
+  datesRendered(data: {view: any, el: HTMLElement}) {
+    this.events$
+      .pipe(take(1))
+      .subscribe(events => {
+        if (!events || !events.length) {
+          return;
+        }
+
+        this.setTitle(events[0].extendedProps.section.block.term.name);
+      })
+    ;
   }
 
   protected getCalendarHeaderConfig() {
@@ -183,6 +218,14 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
         </div>
       </div>
     `;
+  }
+
+  protected setTitle(title: string): void {
+    const refTitle = document.querySelector('.fc-center h2');
+
+    if (refTitle) {
+      refTitle.innerHTML = title;
+    }
   }
 
 }
