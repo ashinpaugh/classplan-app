@@ -116,7 +116,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
    * @param event
    */
   calendarRendered(event: {view: any, el: HTMLElement}): void {
-    this.setTitle('');
+    this.setTitle();
   }
 
   /**
@@ -152,26 +152,14 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
    * @param data
    */
   datesRendered(data: {view: any, el: HTMLElement}) {
-    this.events$
-      .pipe(take(1))
-      .subscribe(events => {
-        if (!events || !events.length) {
-          return;
-        }
-
-        this.setTitle(events[0].extendedProps.section.block.term.name);
-      })
-    ;
+    this.setTitle();
   }
 
-  protected getCalendarHeaderConfig() {
-    return {
-      left: 'prev,next',
-      center: 'title',
-      right: 'timeGridWeek,timeGridDay',
-    };
-  }
-
+  /**
+   * Create a tooltip for event hover events.
+   *
+   * @param section
+   */
   protected createTooltipContent(section: SectionObject): string {
     let days = `
       <div class="row">
@@ -220,12 +208,45 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     `;
   }
 
-  protected setTitle(title: string): void {
-    const refTitle = document.querySelector('.fc-center h2');
+  /**
+   * Get the default options for setting FC's toolbar content layout.
+   */
+  protected getCalendarHeaderConfig(overrides?: object) {
+    const headers = {
+      left: 'prev,next',
+      center: 'title',
+      right: 'timeGridWeek,timeGridDay,dayGridWeek',
+    };
 
-    if (refTitle) {
-      refTitle.innerHTML = title;
+    return Object.assign(headers, overrides || {});
+  }
+
+  /**
+   * Set FC's toolbar title.
+   */
+  protected setTitle(override?: string): void {
+    const doSet = (title: string) => {
+      const refTitle = document.querySelector('.fc-center h2');
+
+      if (refTitle) {
+        refTitle.innerHTML = title;
+      }
+    };
+
+    if (undefined !== override) {
+      return doSet(override);
     }
+
+    this.events$
+      .pipe(take(1))
+      .subscribe(events => {
+        if (!events || !events.length) {
+          return doSet('');
+        }
+
+        doSet(events[0].extendedProps.section.block.term.name);
+      })
+    ;
   }
 
 }
