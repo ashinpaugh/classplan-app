@@ -344,7 +344,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         tap(e => this.debug('ngOptionLabelClick -> onChange', e, event.target)),
       )
       .subscribe((colorEvent: ColorEvent) => {
-        const parent = (event.target as HTMLElement).parentElement;
+        const parent = (event.target as HTMLElement).parentElement.parentElement;
         parent.style.backgroundColor = colorEvent.color.hex;
 
         if (!this.Filters.advanced.colors[type]) {

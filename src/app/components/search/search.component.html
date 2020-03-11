@@ -80,9 +80,16 @@
           <span
             id="blocks-{{item.id}}"
             class="ng-select-label"
-            (mousedown)="ngOptionLabelClick($event, 'blocks', item, colorPallet)"
           >
             {{item.name}}
+          </span>
+
+          <span
+            aria-hidden="true"
+            class="ng-value-icon right ng-star-inserted"
+            (mousedown)="ngOptionLabelClick($event, 'blocks', item, colorPallet)"
+          >
+            <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
           </span>
         </ng-template>
 
@@ -129,9 +136,16 @@
             <span
               id="subjects-{{item.id}}"
               class="ng-select-label"
-              (mousedown)="ngOptionLabelClick($event, 'subjects', item, colorPallet)"
             >
               {{item.name}}
+            </span>
+
+            <span
+              aria-hidden="true"
+              class="ng-value-icon right ng-star-inserted"
+              (mousedown)="ngOptionLabelClick($event, 'subjects', item, colorPallet)"
+            >
+              <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
             </span>
           </ng-template>
 
@@ -195,9 +209,16 @@
             <span
               id="instructors-{{item.id}}"
               class="ng-select-label"
-              (mousedown)="ngOptionLabelClick($event, 'instructors', item, colorPallet)"
             >
               {{item.name}}
+            </span>
+
+            <span
+              aria-hidden="true"
+              class="ng-value-icon right ng-star-inserted"
+              (mousedown)="ngOptionLabelClick($event, 'instructors', item, colorPallet)"
+            >
+              <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
             </span>
           </ng-template>
 
