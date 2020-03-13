@@ -6,8 +6,10 @@ export interface SectionFetchAllParams extends ApiParams {
   block: number | number[];
   subject: number | number[];
   instructor: number | number[];
-  showOnline: number;
-  showAllDay: number;
+  building: number[];
+  room: number[];
+  // showOnline: number;
+  // showAllDay: number;
 }
 
 

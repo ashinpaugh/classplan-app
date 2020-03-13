@@ -92,12 +92,18 @@ export class SectionService extends AbstractService {
    * @param filters
    */
   filtersToSectionParams(filters: AdvancedFilters): SectionFetchAllParams {
+    const getIds = (set: {id: number}[]): number[] => {
+      return set.map(item => item.id);
+    };
+
     return {
-      block: filters.blocks.map(block => block.id),
-      subject: filters.subjects.map(subject => subject.id),
-      instructor: filters.instructors.map(instructor => instructor.id),
-      showAllDay: Number(filters.advanced.showAllDay),
-      showOnline: Number(filters.advanced.showOnline),
+      block: getIds(filters.blocks),
+      subject: getIds(filters.subjects),
+      instructor: getIds(filters.instructors),
+      building: getIds(filters.buildings),
+      room: getIds(filters.rooms),
+      // showAllDay: Number(filters.advanced.showAllDay),
+      // showOnline: Number(filters.advanced.showOnline),
     };
   }
 }

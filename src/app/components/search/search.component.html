@@ -78,7 +78,7 @@
           >×</span>
 
           <span
-            id="blocks-{{item.id}}"
+            id="block-{{item.id}}"
             class="ng-select-label"
           >
             {{item.name}}
@@ -87,7 +87,7 @@
           <span
             aria-hidden="true"
             class="ng-value-icon right ng-star-inserted"
-            (mousedown)="ngOptionLabelClick($event, 'blocks', item, colorPallet)"
+            (mousedown)="ngOptionLabelClick($event, 'block', item, colorPallet)"
           >
             <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
           </span>
@@ -134,7 +134,7 @@
             >×</span>
 
             <span
-              id="subjects-{{item.id}}"
+              id="subject-{{item.id}}"
               class="ng-select-label"
             >
               {{item.name}}
@@ -143,7 +143,7 @@
             <span
               aria-hidden="true"
               class="ng-value-icon right ng-star-inserted"
-              (mousedown)="ngOptionLabelClick($event, 'subjects', item, colorPallet)"
+              (mousedown)="ngOptionLabelClick($event, 'subject', item, colorPallet)"
             >
               <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
             </span>
@@ -207,7 +207,7 @@
             >×</span>
 
             <span
-              id="instructors-{{item.id}}"
+              id="instructor-{{item.id}}"
               class="ng-select-label"
             >
               {{item.name}}
@@ -216,7 +216,7 @@
             <span
               aria-hidden="true"
               class="ng-value-icon right ng-star-inserted"
-              (mousedown)="ngOptionLabelClick($event, 'instructors', item, colorPallet)"
+              (mousedown)="ngOptionLabelClick($event, 'instructor', item, colorPallet)"
             >
               <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
             </span>
@@ -238,6 +238,67 @@
         >
           Filter by selected subjects
         </mat-checkbox>
+      </div>
+    </mat-list-item>
+
+    <mat-list-item
+      id="building-container"
+      class="has-checkbox"
+      [hidden]="undefined == (buildings$ | async)"
+    >
+      <div matLine id="building-first-row" class="row">
+
+        <ng-select
+          #refBuildingSearch
+          appendTo="#building-first-row"
+          placeholder="Chose a Building"
+          groupBy="rooms"
+          bindValue="id"
+          bindLabel="name"
+          [selectableGroup]="true"
+          [searchable]="false"
+          [virtualScroll]="true"
+          [multiple]="true"
+          [clearable]="true"
+          [items]="buildings$ | async"
+        >
+          <ng-template ng-header-tmp>
+            <input
+              placeholder="Search..."
+              type="text"
+              class="ng-select-search"
+              (input)="refBuildingSearch.filter($event.target.value);"
+            />
+          </ng-template>
+
+          <ng-template ng-optgroup-tmp let-item="item">
+            {{item.name}}
+          </ng-template>
+
+          <ng-template ng-label-tmp let-item="item">
+            <span
+              aria-hidden="true"
+              class="ng-value-icon left ng-star-inserted"
+              (click)="ngSelectDeselectItem(refBuildingSearch, item)"
+            >×</span>
+
+            <span
+              id="{{item?.rooms ? 'building' : 'room'}}-{{item.id}}"
+              class="ng-select-label"
+            >
+              {{item.name}}
+            </span>
+
+            <span
+              aria-hidden="true"
+              class="ng-value-icon right ng-star-inserted"
+              (mousedown)="ngOptionLabelClick($event, item.rooms ? 'building' : 'room', item, colorPallet)"
+            >
+              <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
+            </span>
+          </ng-template>
+
+        </ng-select>
       </div>
     </mat-list-item>
 

@@ -1,7 +1,7 @@
 import {AbstractLoggable} from '../classes/abstract-loggable';
-import {from, Observable, of} from 'rxjs';
 import {environment} from '../../environments/environment';
-import {mergeMap, tap} from 'rxjs/operators';
+import {from, Observable, of} from 'rxjs';
+import {concatMap, tap} from 'rxjs/operators';
 
 
 export interface ApiParams {
@@ -35,7 +35,7 @@ export abstract class AbstractService extends AbstractLoggable {
 
     return from(fetch(environment.apiUrl + uri, requestInit))
       .pipe(
-        mergeMap(response => response.json()),
+        concatMap(response => response.json()),
         tap(data => {
           this.log('fetchAll', data);
           this.apiTracker.set(uri, data);
@@ -60,7 +60,7 @@ export abstract class AbstractService extends AbstractLoggable {
 
     return from(fetch(environment.apiUrl + uri, requestInit))
       .pipe(
-        mergeMap(response => response.json()),
+        concatMap(response => response.json()),
         tap(data => {
           this.log('fetch', data);
           this.apiTracker.set(uri, data);

@@ -3,7 +3,7 @@ import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {MatCheckbox, MatCheckboxChange} from '@angular/material/checkbox';
 import {MatExpansionPanel} from '@angular/material/expansion';
 import {MatSelectionListChange} from '@angular/material/list';
-import {NgSelectComponent} from '@ng-select/ng-select';
+import {NgOption, NgSelectComponent} from '@ng-select/ng-select';
 import {GithubComponent} from 'ngx-color/github';
 import {ColorEvent} from 'ngx-color';
 import {TermService} from '../../services/term/term.service';
@@ -12,17 +12,20 @@ import {BasicObject, Dictionary} from '../../interfaces/dictionary';
 import {AbstractComponent} from '../abstract-component';
 import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
+import {BuildingService, UISafeBuilding} from '../../services/building/building.service';
 import {SectionService} from '../../services/section/section.service';
+import {RoomService} from '../../services/room/room.service';
 import {DomUtil} from '../../classes/tools/dom.util';
 import {BehaviorSubject, combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
-import {concatMap, debounceTime, filter, map, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {concatMap, debounceTime, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
 
-
 export interface CalendarColorMatrix {
-  blocks: Dictionary<ColorEvent>;
-  subjects: Dictionary<ColorEvent>;
-  instructors: Dictionary<ColorEvent>;
+  block: Dictionary<ColorEvent>;
+  subject: Dictionary<ColorEvent>;
+  instructor: Dictionary<ColorEvent>;
+  building: Dictionary<ColorEvent>;
+  room: Dictionary<ColorEvent>;
 }
 
 export interface SearchFilters {
@@ -30,6 +33,8 @@ export interface SearchFilters {
   blocks: BlockObject[];
   subjects: BasicObject[];
   instructors: BasicObject[];
+  buildings: UISafeBuilding[];
+  rooms: BasicObject[];
 }
 
 export interface AdvancedFilters extends SearchFilters {
@@ -59,6 +64,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   @ViewChild(MatExpansionPanel, { static: false }) refAdvancedFiltersPanel: MatExpansionPanel;
   @ViewChild('refTermSearch', { static: false }) refTerm: NgSelectComponent;
   @ViewChild('refBlockSearch', { static: false }) refBlock: NgSelectComponent;
+  @ViewChild('refBuildingSearch', { static: false }) refBuilding: NgSelectComponent;
   @ViewChild('refSubjectSearch', { static: false }) refSubject: NgSelectComponent;
   @ViewChild('refInstructorSearch', { static: false }) refInstructor: NgSelectComponent;
   @ViewChild('colorPallet', { static: true, read: ElementRef }) refColor: ElementRef;
@@ -68,6 +74,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   disableSearch$: Observable<boolean>;
   terms$: Observable<TermObject[]>;
   blocks$: Observable<BlockObject[]>;
+  buildings$: Observable<BasicObject[]>;
   subjects$: Observable<BasicObject[]>;
   instructors$: Observable<BasicObject[]>;
 
@@ -76,6 +83,8 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     protected elementRef: ElementRef,
     protected dialogRef: MatDialogRef<SearchComponent>,
     protected terms: TermService,
+    protected buildings: BuildingService,
+    protected rooms: RoomService,
     protected subjects: SubjectService,
     protected instructors: InstructorService,
     protected sections: SectionService,
@@ -120,17 +129,20 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   }
 
   protected init(reset?: boolean): void {
-    const defaultFilters = {
+    const defaultFilters: AdvancedFilters = {
       term: undefined,
       blocks: undefined,
+      buildings: undefined,
+      rooms: undefined,
       subjects: undefined,
       instructors: undefined,
       advanced: {
         showAllDay: true,
         showOnline: true,
-        colors: {},
+        colors: {} as CalendarColorMatrix,
+        xref: {} as any,
       },
-    } as AdvancedFilters;
+    };
 
     if (!!SearchComponent.filters$) {
       if (reset) {
@@ -146,18 +158,19 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   ngAfterViewInit(): void {
 
     this.disableSearch$ = combineLatest([
-      this.refBlock.changeEvent,
-      this.refSubject.changeEvent.pipe(startWith(undefined)),
-      this.refInstructor.changeEvent.pipe(startWith(undefined)),
+      this.onTermChange(true),
+      this.ngOnChange(this.refSubject).pipe(startWith(undefined)),
+      this.ngOnChange(this.refInstructor).pipe(startWith(undefined)),
+      this.ngOnChange(this.refBuilding).pipe(startWith(undefined)),
     ])
       .pipe(
         tap(results => this.debug('disableSearch$ -> peak', results)),
-        map((results: [BlockObject[], BasicObject[], BasicObject[]]) => {
-          const [blocks, subjects, instructors] = results;
+        map((results: [BlockObject[], BasicObject[], BasicObject[], BasicObject[]]) => {
+          const [blocks, subjects, instructors, buildings] = results;
 
           const invalid = (item: BasicObject[]) => !item || !!item && !item.length;
 
-          return invalid(blocks) || invalid(subjects) && invalid(instructors);
+          return invalid(blocks) || invalid(subjects) && invalid(instructors) && invalid(buildings);
         }),
         startWith(true),
         tap(disableSearch => this.log('disableSearch$', disableSearch)),
@@ -171,12 +184,15 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
     ;
 
-    this.blocks$ = this.refTerm.changeEvent
+    // this.blocks$ = this.ngOnChange<TermObject>(this.refTerm)
+    this.blocks$ = this.onTermChange()
       .pipe(
-        // tap(term => this.log('blocks$ -> peak', term)),
+        tap((term: TermObject) => this.log('blocks$ -> peak', term)),
         map((term: TermObject) => term && term.blocks),
         tap(blocks => {
           this.log('blocks$', blocks);
+
+          this.ngSelectClear(this.refBlock);
 
           if (!blocks || !blocks.length) {
             return;
@@ -190,8 +206,8 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     ;
 
     this.subjects$ = combineLatest([
-      this.refBlock.changeEvent,
-      this.refInstructor.changeEvent.pipe(startWith(undefined)),
+      this.onTermChange(true),
+      this.ngOnChange(this.refInstructor).pipe(startWith(undefined)),
       this.refChkSubjectsByInstructors.change.pipe(
         startWith({
           source: this.refChkSubjectsByInstructors,
@@ -200,7 +216,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       ),
     ])
       .pipe(
-        // tap(value => this.log('subjects -> peak', value)),
+        tap(value => this.log('subjects -> peak', value)),
         switchMap((results: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
           const [blocks, instructors, filterByInstructors] = results;
 
@@ -217,13 +233,13 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
           return this.subjects.fetchByInstructor(blocks, instructors);
         }),
         tap((data) => this.log('subjects', data)),
-        share()
+        share(),
       )
     ;
 
     this.instructors$ = combineLatest([
-      this.refBlock.changeEvent,
-      this.refSubject.changeEvent.pipe(startWith(undefined)),
+      this.onTermChange(true),
+      this.ngOnChange(this.refSubject).pipe(startWith(undefined)),
       this.refChkInstructorsBySubject.change.pipe(
         startWith({
           source: this.refChkInstructorsBySubject,
@@ -252,11 +268,29 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
     ;
 
+    this.buildings$ = this.onTermChange(true)
+      .pipe(
+        tap(blocks => this.log('building -> peak', blocks)),
+        switchMap((blocks: BasicObject[]) => {
+          // When the block value's change - it can modify the values of this component.
+          this.ngSelectClear(this.refBuilding);
+
+          if (!blocks || !blocks.length) {
+            return of(undefined);
+          }
+
+          return this.buildings.multiFetchAllByBlock(blocks);
+        }),
+        shareReplay(1),
+        tap(buildings => this.log('buildings -> list', buildings)),
+      )
+    ;
+
     // Auto-select the Full Semester block.
     this.blocks$
       .pipe(
         debounceTime(100),
-        map(blocks => blocks.find(block => 'Full Semester' === block.name)),
+        map(blocks => blocks && blocks.find(block => 'Full Semester' === block.name)),
         filter(fullSemester => !!fullSemester),
         takeUntil(this.ngUnsubscribe$),
       )
@@ -368,30 +402,30 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     this.showAllDay = this.Filters.advanced.showAllDay;
     this.showOnline = this.Filters.advanced.showOnline;
 
-    this.openAdvancedPanelOnSetFilter();
-
     this.refChkSubjectsByInstructors.checked = this.Filters.advanced.xref.subjects;
     this.refChkInstructorsBySubject.checked  = this.Filters.advanced.xref.instructors;
 
     this.refTerm.select(termOption);
 
-    const syncFilterWithSelect = (
-      ngSelect: NgSelectComponent,
-      list$: Observable<BasicObject[]>,
-      filterBy: BasicObject[]
-    ) => {
+    const syncFilterWithSelect = (ngSelect: NgSelectComponent, list$: Observable<BasicObject[]>, selected: BasicObject[], matchOnId?: boolean) => {
       list$
         .pipe(
           // Push to the end of the queue to allow ng-select to render the options.
-          concatMap(() => timer(0)),
+          switchMap(() => timer(0)),
           take(1),
           takeUntil(this.ngUnsubscribe$),
         )
         .subscribe(() => {
-          filterBy
-            .map(block => ngSelect.itemsList.findByLabel(block.name))
-            .filter(found => !!found)
-            .forEach(item => ngSelect.select(item))
+          selected
+            .map((obj: BasicObject) => {
+              if (!matchOnId) {
+                return ngSelect.itemsList.findByLabel(obj.name);
+              }
+
+              return ngSelect.itemsList.items.find(item => (item.value as BasicObject).id === obj.id)
+            })
+            .filter((option: NgOption) => !!option && !option.selected)
+            .forEach((option: NgOption) => ngSelect.select(option))
           ;
         })
       ;
@@ -400,6 +434,10 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     syncFilterWithSelect(this.refBlock, this.blocks$, this.Filters.blocks);
     syncFilterWithSelect(this.refSubject, this.subjects$, this.Filters.subjects);
     syncFilterWithSelect(this.refInstructor, this.instructors$, this.Filters.instructors);
+    syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.buildings, true);
+    syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.rooms, true);
+
+    this.openAdvancedPanelOnSetFilter();
   }
 
   protected openAdvancedPanelOnSetFilter(): void {
@@ -417,9 +455,15 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   }
 
   protected getFilters(): AdvancedFilters {
+    const ngBuildings = this.refBuilding.selectedValues as UISafeBuilding[];
+    const buildings   = ngBuildings.filter((item: UISafeBuilding) => !!item.rooms);
+    const rooms       = ngBuildings.filter((item: UISafeBuilding) => !item.rooms);
+
     return {
       term: this.refTerm.selectedValues[0] as TermObject,
       blocks: this.refBlock.selectedValues as BlockObject[],
+      buildings: buildings as UISafeBuilding[],
+      rooms: [].concat(...rooms),
       subjects: this.refSubject.selectedValues as BasicObject[],
       instructors: this.refInstructor.selectedValues as BasicObject[],
       advanced: {
@@ -465,9 +509,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
           return false;
         }
 
-        const children = Array.from(element.childNodes);
-
-        return children.find((label: HTMLElement) => !!label.classList && label.classList.contains('ng-select-label'));
+        return Array.from(element.childNodes)
+          .find((label: HTMLElement) => !!label.classList && label.classList.contains('ng-select-label'))
+        ;
       })
       .filter((element: HTMLElement) => !!element)
     ;
@@ -481,6 +525,35 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         label.parentElement.style.backgroundColor = color;
       }
     });
+  }
+
+  /**
+   * Monitor ngSelect change event sources.
+   *
+   * @param ngSelect
+   */
+  protected ngOnChange<T = BasicObject[]>(ngSelect: NgSelectComponent): Observable<T> {
+    return merge(ngSelect.clearEvent, ngSelect.changeEvent);
+  }
+
+  /**
+   * Trigger list changes for fields that depend on the Term / Term Block fields.
+   *
+   * @param includeBlock
+   */
+  protected onTermChange(includeBlock?: boolean): Observable<TermObject|BlockObject[]> {
+    const termChange$ = this.ngOnChange(this.refTerm);
+
+    if (!includeBlock) {
+      return termChange$;
+    }
+
+    const blockChange$      = this.ngOnChange(this.refBlock);
+    const mappedTermEvents$ = termChange$
+      .pipe(mapTo(this.refBlock.selectedValues))
+    ;
+
+    return merge(mappedTermEvents$, blockChange$) as Observable<BlockObject[]>;
   }
 
 }

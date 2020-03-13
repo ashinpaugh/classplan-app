@@ -110,24 +110,14 @@ export class FullCalendarService extends AbstractLoggable {
    * @param defaultColor
    */
   getColor(matrix: CalendarColorMatrix, section, defaultColor = this.defaultEventColor): string {
-    let collection;
+    const fieldSpecificity = ['instructor', 'room', 'building', 'subject', 'block'];
+    const mostSpecific     = fieldSpecificity.find(field => field in matrix);
 
-    collection = matrix.instructors;
-    if (!!collection && collection.hasOwnProperty(section.instructor.id)) {
-      return collection[section.instructor.id];
+    if (!mostSpecific) {
+      return defaultColor;
     }
 
-    collection = matrix.subjects;
-    if (!!collection && collection.hasOwnProperty(section.subject.id)) {
-      return collection[section.subject.id];
-    }
-
-    collection = matrix.blocks;
-    if (!!collection && collection.hasOwnProperty(section.block.id)) {
-      return collection[section.block.id];
-    }
-
-    return defaultColor;
+    return matrix[mostSpecific][section[mostSpecific].id];
   }
 
   /**

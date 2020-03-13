@@ -1,4 +1,5 @@
 import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation} from '@angular/core';
+import {MatSnackBar} from '@angular/material/snack-bar';
 import {FullCalendarComponent} from '@fullcalendar/angular';
 import {PluginDef} from "@fullcalendar/core/plugin-system";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -9,7 +10,7 @@ import {EventObject, FullCalendarService} from '../../services/full-calendar/ful
 import {SectionObject} from '../../services/section/section.interfaces';
 import {AdvancedFilters} from '../search/search.component';
 import {BehaviorSubject, Observable, of} from 'rxjs';
-import {shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
+import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 
 /**
  * @see https://fullcalendar.io/docs/header
@@ -59,6 +60,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   constructor(
     protected elementRef: ElementRef,
+    protected snackBar: MatSnackBar,
     protected fullcalendar: FullCalendarService,
   ) {
     super();
@@ -74,11 +76,18 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     this.events$ = this.filters$.asObservable()
       .pipe(
         switchMap((filters: AdvancedFilters) => {
+          hideAll({duration: 0});
+
           if (!filters || !filters.blocks || !filters.blocks.length) {
             return of([]);
           }
 
           return this.fullcalendar.fetchAll(filters, filters.advanced.colors);
+        }),
+        catchError(() => {
+          this.snackBar.open('An error occurred while fetching your classes. Please try again, or reduce your filter complexity.');
+
+          return of([]);
         }),
         takeUntil(this.ngUnsubscribe$),
         shareReplay(1),
