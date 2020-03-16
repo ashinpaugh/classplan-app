@@ -54,9 +54,12 @@ export class BuildingService extends AbstractService {
               id:    data.id,
               name:  data.name,
               rooms: data.rooms.map(room => {
+                const roomName = data.short_name + ' - ' + room.number;
+
                 return {
                   id: room.id,
-                  name: data.short_name + ' - ' + room.number,
+                  name: roomName,
+                  sortName: roomName.toLocaleLowerCase(),
                 };
               }),
             };
@@ -64,6 +67,24 @@ export class BuildingService extends AbstractService {
 
           return acc.concat(results);
         }, []),
+        map(buildings => {
+          buildings.forEach((building) => {
+            building.rooms = building.rooms
+              .sort((a: BasicObject & {sortName: string}, b: BasicObject & {sortName: string}) => {
+                if (a.sortName < b.sortName) {
+                  return -1;
+                }
+
+                if (a.sortName > b.sortName) {
+                  return 1;
+                }
+
+                return 0;
+              });
+          });
+
+          return [...new Set(buildings)];
+        })
       )
     ;
   }

@@ -14,10 +14,11 @@
     [plugins]="plugins"
     [header]="header"
     [events]="events$ | async"
+    [eventOrder]="['start', 'allDay', 'backgroundColor']"
     [views]="{
-      timeGridWeek: {buttonText: 'time'},
-      timeGridDay: {buttonText: 'time (single)'},
-      dayGridWeek: {buttonText: 'day'}
+      timeGridWeek: {buttonText: 'default'},
+      timeGridDay: {buttonText: 'single'},
+      dayGridWeek: {buttonText: 'compressed'}
     }"
     (viewSkeletonRender)="calendarRendered($event)"
     (eventRender)="eventRender($event)"

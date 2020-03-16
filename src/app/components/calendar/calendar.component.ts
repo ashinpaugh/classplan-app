@@ -85,7 +85,11 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           return this.fullcalendar.fetchAll(filters, filters.advanced.colors);
         }),
         catchError(() => {
-          this.snackBar.open('An error occurred while fetching your classes. Please try again, or reduce your filter complexity.');
+          this.snackBar.open(
+            `An error occurred while fetching your classes. Please try again, or reduce your filter complexity.`,
+            undefined,
+            {duration: 5000}
+          );
 
           return of([]);
         }),
@@ -100,6 +104,12 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
         this.events.next(events);
 
         if (!events || !events.length) {
+          const filters = this.filters$.getValue();
+
+          if (filters && Object.keys(filters).length > 0) {
+            this.snackBar.open('No results found.', undefined, {duration: 5000});
+          }
+
           return;
         }
 
@@ -173,7 +183,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     let days = `
       <div class="row">
         <span class="label">Days:</span>
-        <span class="value">${section.days}</span>
+        <span class="value">${section.days}: ${section.start_time} - ${section.end_time}</span>
       </div>
     `;
 
@@ -192,7 +202,9 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
           <span class="spacer"></span>
 
-          <div class="bold">${section.course.name}</div>
+          <div class="bold">
+            ${(section.meeting_type === 0 ? '(Exam) ' : '') + section.course.name}
+          </div>
         </div>
 
         <div class="body">

@@ -30,6 +30,7 @@ export interface EventObject {
   backgroundColor?: string;
   borderColor?: string;
   textColor?: string;
+  eventOrder?: string | string[] | Function;
 }
 
 @Injectable({
@@ -99,7 +100,11 @@ export class FullCalendarService extends AbstractLoggable {
       return 0;
     });
 
-    return format(new Date(startParam(sortedSections[0])));
+    // Parse the earliest start date, and then move it forward 2 weeks to account for MLK day.
+    const startDay = new Date(startParam(sortedSections[0]));
+    startDay.setDate(startDay.getDate() + 14);
+
+    return format(startDay);
   }
 
   /**
@@ -128,6 +133,8 @@ export class FullCalendarService extends AbstractLoggable {
    */
   protected formatSourceToEvent(colors: CalendarColorMatrix, section: SectionObject): EventObject {
     const isAllDay = this.isAllDay(section);
+    // section.meeting_type_str = this.meetingTypeToStr(section.meeting_type);
+
     const event = {
       id: section.id,
       title: section.subject.name + ' ' + section.course.number + ': ' + section.number,
@@ -207,6 +214,17 @@ export class FullCalendarService extends AbstractLoggable {
    */
   protected isAllDay(section: SectionObject, includeOnline: boolean = true): boolean {
     return includeOnline && this.isOnline(section) || !section.days && section.start_time === section.end_time;
+  }
+
+  protected meetingTypeToStr(typeId: number): string {
+    switch (typeId) {
+      case 0: return 'Exam';
+      case 1: return 'Class';
+      case 2: return 'Web';
+      case 3: return 'Lab';
+      case 4: return 'Conference';
+      default: return 'Unknown';
+    }
   }
 
 }

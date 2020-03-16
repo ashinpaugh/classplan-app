@@ -23,6 +23,7 @@ export interface SectionObject {
   num_enrolled: number
   maximum_enrollment: number;
   meeting_type: number;
+  meeting_type_str: string;
   start: string;
   end: string;
   start_time: string;

@@ -286,6 +286,18 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
     ;
 
+    DomUtil.watch$(this.elementRef.nativeElement, {childList: true, subtree: true})
+      .pipe(takeUntil(this.ngUnsubscribe$))
+      .subscribe(records => this.setLabelColor(records))
+    ;
+
+    this.log('filters', this.Filters);
+
+    if (this.Filters.term) {
+      setTimeout(() => this.setFilters(), 0);
+      return;
+    }
+
     // Auto-select the Full Semester block.
     this.blocks$
       .pipe(
@@ -302,19 +314,6 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         }
       })
     ;
-
-    DomUtil.watch$(this.elementRef.nativeElement, {childList: true, subtree: true})
-      .pipe(takeUntil(this.ngUnsubscribe$))
-      .subscribe(records => this.setLabelColor(records))
-    ;
-
-    this.log('filters', this.Filters);
-
-    if (!this.Filters.term) {
-      return;
-    }
-
-    setTimeout(() => this.setFilters(), 0);
   }
 
   ngSelectDeselectItem(ngSelect: NgSelectComponent, item: BasicObject) {
