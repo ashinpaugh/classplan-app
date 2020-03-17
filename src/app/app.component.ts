@@ -1,10 +1,12 @@
-import {ChangeDetectionStrategy, Component, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit, TemplateRef, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {AdvancedFilters, SearchComponent} from './components/search/search.component';
 import {CalendarComponent} from './components/calendar/calendar.component';
 import {SectionService} from './services/section/section.service';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {filter, map, startWith, take} from 'rxjs/operators';
+import {filter, map, startWith, take, tap} from 'rxjs/operators';
+import {UpdateObject, UpdateService} from './services/update/update.service';
+import {AbstractComponent} from './components/abstract-component';
 
 @Component({
   selector: 'classplan-root',
@@ -13,9 +15,10 @@ import {filter, map, startWith, take} from 'rxjs/operators';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent implements OnInit {
+export class AppComponent extends AbstractComponent implements OnInit {
 
   @ViewChild(CalendarComponent, { static: true }) refCalendar: CalendarComponent;
+  @ViewChild('tplLoadingSpinner', { static: true }) refLoadingSpinner: TemplateRef<any>;
 
   filters$: BehaviorSubject<AdvancedFilters>;
 
@@ -24,8 +27,11 @@ export class AppComponent implements OnInit {
 
   constructor(
     protected dialog: MatDialog,
+    protected updates: UpdateService,
     protected sections: SectionService,
   ) {
+    super();
+
     this.filters$ = new BehaviorSubject<AdvancedFilters>(undefined);
   }
 
@@ -40,10 +46,17 @@ export class AppComponent implements OnInit {
         startWith(true),
       )
     ;
+
+    this.updates.fetch()
+      .pipe(
+        take(1),
+      )
+      .subscribe(log => this.parseUpdateLog(log))
+    ;
   }
 
   openSearch(): void {
-    const searchModal = this.dialog.open<SearchComponent>(SearchComponent, {
+    const searchModal = this.dialog.open(SearchComponent, {
       position: {top: '5vh'},
       width: '50%',
       minHeight: 560,
@@ -70,6 +83,27 @@ export class AppComponent implements OnInit {
     SearchComponent.filters$ = undefined;
 
     this.filters$.next(undefined);
+  }
+
+  protected parseUpdateLog(log: UpdateObject) {
+    if (log.end) {
+      return this.log('parseUpdateLog: app ready', log);
+    }
+
+    const modal = this.dialog.open(this.refLoadingSpinner, {
+      position: {top: '37.5%'},
+      width: 'fit-content',
+      height: 'auto',
+      disableClose: true,
+    });
+
+    this.updates.check()
+      .pipe(
+        tap(payload => this.log('parseUpdateLog -> peak', payload))
+      )
+      .subscribe(() => modal.close())
+    ;
+
   }
 
 

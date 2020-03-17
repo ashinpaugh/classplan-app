@@ -17,7 +17,7 @@ import {SectionService} from '../../services/section/section.service';
 import {RoomService} from '../../services/room/room.service';
 import {DomUtil} from '../../classes/tools/dom.util';
 import {BehaviorSubject, combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
-import {concatMap, debounceTime, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {debounceTime, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
 
 export interface CalendarColorMatrix {
@@ -316,8 +316,16 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     ;
   }
 
-  ngSelectDeselectItem(ngSelect: NgSelectComponent, item: BasicObject) {
+  ngSelectDeselectItem(ngSelect: NgSelectComponent, type: string, item: BasicObject) {
     ngSelect.clearItem(item);
+
+    const colors = this.Filters.advanced.colors[type];
+
+    if (!colors || !colors[item.id]) {
+      return;
+    }
+
+    delete colors[item.id];
   }
 
   advancedChanged(data: MatSelectionListChange) {
@@ -378,6 +386,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
       .subscribe((colorEvent: ColorEvent) => {
         const parent = (event.target as HTMLElement).parentElement.parentElement;
+        this.log('ngOptionLabelClick -> color change', parent, colorEvent);
         parent.style.backgroundColor = colorEvent.color.hex;
 
         if (!this.Filters.advanced.colors[type]) {

@@ -10,6 +10,7 @@ import {MatButtonModule} from '@angular/material/button';
 import {MatDialogModule} from '@angular/material/dialog';
 import {SearchComponentModule} from './components/search/search.module';
 import {CalendarComponentModule} from './components/calendar/calendar.module';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 @NgModule({
   declarations: [AppComponent],
@@ -25,6 +26,7 @@ import {CalendarComponentModule} from './components/calendar/calendar.module';
 
     SearchComponentModule,
     CalendarComponentModule,
+    MatProgressSpinnerModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

@@ -55,4 +55,13 @@
   [filters]="filters$ | async"
 ></classplan-calendar>
 
+<ng-template #tplLoadingSpinner>
+
+  <div id="update-spinner">
+    <mat-spinner color="accent"></mat-spinner>
+
+    <h3>Please standby while we update the scheduling data.</h3>
+  </div>
+</ng-template>
+
 <router-outlet></router-outlet>

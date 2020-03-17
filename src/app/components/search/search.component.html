@@ -74,7 +74,7 @@
           <span
             aria-hidden="true"
             class="ng-value-icon left ng-star-inserted"
-            (click)="ngSelectDeselectItem(refBlockSearch, item)"
+            (click)="ngSelectDeselectItem(refBlockSearch, 'block', item)"
           >×</span>
 
           <span
@@ -130,7 +130,7 @@
             <span
               aria-hidden="true"
               class="ng-value-icon left ng-star-inserted"
-              (click)="ngSelectDeselectItem(refSubjectSearch, item)"
+              (click)="ngSelectDeselectItem(refSubjectSearch, 'subject', item)"
             >×</span>
 
             <span
@@ -203,7 +203,7 @@
             <span
               aria-hidden="true"
               class="ng-value-icon left ng-star-inserted"
-              (click)="ngSelectDeselectItem(refInstructorSearch, item)"
+              (click)="ngSelectDeselectItem(refInstructorSearch, 'instructor', item)"
             >×</span>
 
             <span
@@ -279,7 +279,7 @@
             <span
               aria-hidden="true"
               class="ng-value-icon left ng-star-inserted"
-              (click)="ngSelectDeselectItem(refBuildingSearch, item)"
+              (click)="ngSelectDeselectItem(refBuildingSearch, item.rooms ? 'building' : 'room', item)"
             >×</span>
 
             <span

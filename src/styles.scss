@@ -30,3 +30,9 @@ span.spacer {
 mat-dialog-container.mat-dialog-container {
   overflow: visible;
 }
+
+#update-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

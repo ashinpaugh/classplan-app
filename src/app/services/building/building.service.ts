@@ -49,21 +49,25 @@ export class BuildingService extends AbstractService {
     return merge(...requests$)
       .pipe(
         scan((acc: UISafeBuilding[], rows: BuildingObject[]) => {
-          const results = rows.map(data => {
-            return {
-              id:    data.id,
-              name:  data.name,
-              rooms: data.rooms.map(room => {
-                const roomName = data.short_name + ' - ' + room.number;
+          const results = rows
+            // Prevent duplicate buildings. The api automatically returns all used rooms for a building.
+            .filter(row => acc.find(current => current.id === row.id) === undefined)
+            .map(data => {
+              return {
+                id:    data.id,
+                name:  data.name,
+                rooms: data.rooms.map(room => {
+                  const roomName = data.short_name + ' - ' + room.number;
 
-                return {
-                  id: room.id,
-                  name: roomName,
-                  sortName: roomName.toLocaleLowerCase(),
-                };
-              }),
-            };
-          });
+                  return {
+                    id: room.id,
+                    name: roomName,
+                    sortName: roomName.toLocaleLowerCase(),
+                  };
+                }),
+              };
+            })
+          ;
 
           return acc.concat(results);
         }, []),
@@ -83,7 +87,7 @@ export class BuildingService extends AbstractService {
               });
           });
 
-          return [...new Set(buildings)];
+          return buildings;
         })
       )
     ;
