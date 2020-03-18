@@ -2,18 +2,18 @@ import {environment} from '../../environments/environment';
 
 export class AbstractLoggable {
 
-  protected enabled: boolean;
+  protected loggingEnabled: boolean;
 
   constructor() {
-    this.enabled = !environment.production;
+    this.loggingEnabled = !environment.production;
   }
 
-  get Enabled(): boolean {
-    return this.enabled;
+  get LoggingEnabled(): boolean {
+    return this.loggingEnabled;
   }
 
-  set Enabled(toggle: boolean) {
-    this.enabled = toggle;
+  set LoggingEnabled(toggle: boolean) {
+    this.loggingEnabled = toggle;
   }
 
   protected log(message: string, ...args): this {
@@ -29,7 +29,7 @@ export class AbstractLoggable {
   }
 
   protected doLog(method: (...args: any[]) => void, message: string, args: any[]): this {
-    if (!this.Enabled || !method) {
+    if (!this.LoggingEnabled || !method) {
       return this;
     }
 

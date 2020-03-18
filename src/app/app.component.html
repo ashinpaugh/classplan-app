@@ -58,7 +58,11 @@
 <ng-template #tplLoadingSpinner>
 
   <div id="update-spinner">
-    <mat-spinner color="accent"></mat-spinner>
+    <mat-progress-spinner
+      color="accent"
+      [mode]="(updateProgress$ | async) > 0 ? 'determinate' : 'indeterminate'"
+      [value]="updateProgress$ | async"
+    ></mat-progress-spinner>
 
     <h3>Please standby while we update the scheduling data.</h3>
   </div>

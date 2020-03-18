@@ -1,6 +1,3 @@
-/**
- * TermService interfaces.
- */
 import {BasicObject} from '../../interfaces/dictionary';
 
 export interface BlockObject extends BasicObject {

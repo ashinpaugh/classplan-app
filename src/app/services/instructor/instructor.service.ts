@@ -1,10 +1,14 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
-import {merge, Observable} from 'rxjs';
 import {BasicObject, Dictionary} from '../../interfaces/dictionary';
-import {ApiGetBlockAwareInstructorList} from './instructor.interfaces';
-import {map, tap, toArray} from 'rxjs/operators';
 import {BlockObject} from '../term/term.interfaces';
+import {merge, Observable} from 'rxjs';
+import {map, tap, toArray} from 'rxjs/operators';
+
+export interface ApiGetBlockAwareInstructorList {
+  block: BlockObject;
+  instructors: Dictionary<BasicObject[]>;
+}
 
 @Injectable({
   providedIn: 'root'
