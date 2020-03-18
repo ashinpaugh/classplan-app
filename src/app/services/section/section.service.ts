@@ -102,8 +102,9 @@ export class SectionService extends AbstractService {
       instructor: getIds(filters.instructors),
       building: getIds(filters.buildings),
       room: getIds(filters.rooms),
-      // showAllDay: Number(filters.advanced.showAllDay),
-      // showOnline: Number(filters.advanced.showOnline),
+      allDay: Number(filters.advanced.showAllDay),
+      online: Number(filters.advanced.showOnline),
+      meetingType: filters.advanced.meetingTypes,
     };
   }
 }

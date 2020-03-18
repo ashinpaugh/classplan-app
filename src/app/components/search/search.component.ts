@@ -13,6 +13,7 @@ import {AbstractComponent} from '../abstract-component';
 import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
 import {BuildingService, UISafeBuilding} from '../../services/building/building.service';
+import {SectionMeetingType} from '../../services/section/section.interfaces';
 import {SectionService} from '../../services/section/section.service';
 import {RoomService} from '../../services/room/room.service';
 import {DomUtil} from '../../classes/tools/dom.util';
@@ -42,6 +43,7 @@ export interface AdvancedFilters extends SearchFilters {
     colors: CalendarColorMatrix;
     showAllDay: boolean;
     showOnline: boolean;
+    meetingTypes: SectionMeetingType[],
     xref: {
       subjects: boolean;
       instructors: boolean;
@@ -71,6 +73,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   @ViewChild('chkFilterSubjectsByInstructors', { static: false }) refChkSubjectsByInstructors: MatCheckbox;
   @ViewChild('chkFilterInstructorsBySubjects', { static: false }) refChkInstructorsBySubject: MatCheckbox;
 
+  availableMeetingTypes: string[];
   disableSearch$: Observable<boolean>;
   terms$: Observable<TermObject[]>;
   blocks$: Observable<BlockObject[]>;
@@ -91,6 +94,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   ) {
     super();
 
+    this.setMeetingTypes();
     this.init();
   }
 
@@ -112,9 +116,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
 
   @Input()
   set showAllDay(show: boolean) {
-    const filters = this.Filters;
-    filters.advanced.showAllDay = show;
-    this.Filters = filters;
+    this.setAdvancedParam('showAllDay', show);
   }
 
   get showOnline() {
@@ -123,8 +125,21 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
 
   @Input()
   set showOnline(show: boolean) {
+    this.setAdvancedParam('showOnline', show);
+  }
+
+  get meetingTypes() {
+    return this.Filters.advanced.meetingTypes;
+  }
+
+  @Input()
+  set meetingTypes(type: SectionMeetingType[]) {
+    this.setAdvancedParam('meetingTypes', type);
+  }
+
+  protected setAdvancedParam(param: string, value) {
     const filters = this.Filters;
-    filters.advanced.showOnline = show;
+    filters.advanced[param] = value;
     this.Filters = filters;
   }
 
@@ -139,6 +154,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       advanced: {
         showAllDay: true,
         showOnline: true,
+        meetingTypes: [SectionMeetingType.Class],
         colors: {} as CalendarColorMatrix,
         xref: {} as any,
       },
@@ -409,6 +425,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
 
     this.showAllDay = this.Filters.advanced.showAllDay;
     this.showOnline = this.Filters.advanced.showOnline;
+    this.meetingTypes = this.Filters.advanced.meetingTypes;
 
     this.refChkSubjectsByInstructors.checked = this.Filters.advanced.xref.subjects;
     this.refChkInstructorsBySubject.checked  = this.Filters.advanced.xref.instructors;
@@ -478,6 +495,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         colors: this.Filters.advanced.colors,
         showAllDay: this.showAllDay,
         showOnline: this.showOnline,
+        meetingTypes: this.meetingTypes,
         xref: {
           subjects: this.refChkSubjectsByInstructors.checked,
           instructors: this.refChkInstructorsBySubject.checked,
@@ -562,6 +580,19 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     ;
 
     return merge(mappedTermEvents$, blockChange$) as Observable<BlockObject[]>;
+  }
+
+  /**
+   * Set the meeting types.
+   */
+  protected setMeetingTypes(): void {
+    this.availableMeetingTypes = [];
+
+    Object.keys(SectionMeetingType)
+      .filter(key => Number.isInteger(+key))
+      .sort((a, b) => a < b ? -1 : a > b ? 1 : 0)
+      .forEach(key => this.availableMeetingTypes.push(SectionMeetingType[key]))
+    ;
   }
 
 }

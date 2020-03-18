@@ -31,6 +31,16 @@ classplan-search {
 
       mat-expansion-panel {
         margin-top: 16px;
+
+        .mat-expansion-panel-body {
+          display: flex;
+          flex-direction: column;
+
+          #meeting-type {
+            width: calc(100% - 32px);
+            margin: 0 auto;
+          }
+        }
       }
 
       mat-list {

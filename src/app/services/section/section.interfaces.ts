@@ -2,14 +2,24 @@ import {BlockObject} from '../term/term.interfaces';
 import {BasicObject} from '../../interfaces/dictionary';
 import {ApiParams} from '../abstract-service';
 
+
+export enum SectionMeetingType {
+  Exam = 0,
+  Class = 1,
+  Web = 2,
+  Lab = 3,
+  Conference = 4,
+}
+
 export interface SectionFetchAllParams extends ApiParams {
   block: number | number[];
   subject: number | number[];
   instructor: number | number[];
   building: number[];
   room: number[];
-  // showOnline: number;
-  // showAllDay: number;
+  meetingType: SectionMeetingType[];
+  allDay: number;
+  online: number;
 }
 
 

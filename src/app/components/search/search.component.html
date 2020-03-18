@@ -42,6 +42,7 @@
         [multiple]="false"
         [clearable]="true"
         [items]="terms$ | async"
+        [markFirst]="true"
       ></ng-select>
     </mat-list-item>
 
@@ -318,6 +319,16 @@
         Advanced
       </mat-panel-title>
     </mat-expansion-panel-header>
+
+    <mat-form-field id="meeting-type">
+      <mat-label>Meeting Types</mat-label>
+
+      <mat-select multiple [(ngModel)]="meetingTypes">
+        <mat-option *ngFor="let type of availableMeetingTypes; let idx = index" [value]="idx">
+          {{type}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
     <mat-selection-list (selectionChange)="advancedChanged($event)">
       <mat-list-option

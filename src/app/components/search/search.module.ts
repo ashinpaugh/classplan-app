@@ -13,6 +13,7 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatListModule} from '@angular/material/list';
 import {ColorGithubModule} from 'ngx-color/github';
 import {MatExpansionModule} from '@angular/material/expansion';
+import {MatSelectModule} from '@angular/material/select';
 
 
 @NgModule({
@@ -33,6 +34,7 @@ import {MatExpansionModule} from '@angular/material/expansion';
     MatListModule,
     ColorGithubModule,
     MatExpansionModule,
+    MatSelectModule,
   ],
   bootstrap: [SearchComponent],
   exports: [SearchComponent],
