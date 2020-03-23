@@ -12,7 +12,6 @@ import {FormsModule} from '@angular/forms';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatListModule} from '@angular/material/list';
 import {ColorGithubModule} from 'ngx-color/github';
-import {MatExpansionModule} from '@angular/material/expansion';
 import {MatSelectModule} from '@angular/material/select';
 
 
@@ -29,14 +28,13 @@ import {MatSelectModule} from '@angular/material/select';
     MatCardModule,
     MatDialogModule,
     MatGridListModule,
-    NgSelectModule,
     MatCheckboxModule,
     MatListModule,
-    ColorGithubModule,
-    MatExpansionModule,
     MatSelectModule,
+    NgSelectModule,
+    ColorGithubModule,
   ],
   bootstrap: [SearchComponent],
-  exports: [SearchComponent],
+  exports: [],
 })
 export class SearchComponentModule { }

@@ -8,8 +8,6 @@
 
   <mat-card-content>
     <ng-container *ngTemplateOutlet="tplFields"></ng-container>
-
-    <ng-container *ngTemplateOutlet="tplAdvancedFields"></ng-container>
   </mat-card-content>
 
   <span class="spacer"></span>
@@ -162,7 +160,7 @@
           #chkFilterSubjectsByInstructors
           labelPosition="before"
           color="primary"
-          checked="{{(Filter$ | async)?.advanced?.xref?.subjects}}"
+          [checked]="(Filter$ | async)?.uiFilters?.xref?.subjects"
         >
           Filter by selected instructors
         </mat-checkbox>
@@ -235,7 +233,7 @@
           #chkFilterInstructorsBySubjects
           labelPosition="before"
           color="primary"
-          checked="{{(Filter$ | async)?.advanced?.xref?.instructors || true}}"
+          [checked]="(Filter$ | async)?.uiFilters?.xref?.instructors"
         >
           Filter by selected subjects
         </mat-checkbox>
@@ -304,22 +302,17 @@
     </mat-list-item>
 
   </mat-list>
+
+  <ng-container *ngTemplateOutlet="tplOtherFields; context: {
+    hidden: !(buildings$ | async)?.length
+  }"></ng-container>
 </ng-template>
 
 
 
-<ng-template #tplAdvancedFields let-hidden="hidden">
+<ng-template #tplOtherFields let-hidden="hidden">
 
-  <mat-expansion-panel
-    [hidden]="undefined == ((instructors$ | async) || (subjects$ | async))"
-  >
-
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        Advanced
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-
+  <div id="other-fields" [hidden]="hidden">
     <mat-form-field id="meeting-type">
       <mat-label>Meeting Types</mat-label>
 
@@ -330,33 +323,21 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-selection-list (selectionChange)="advancedChanged($event)">
+    <mat-selection-list (selectionChange)="advancedCheckChanged($event)">
       <mat-list-option
         ngDefaultControl
         color="primary"
         [value]="'showAllDay'"
-        [selected]="(Filter$ | async).advanced.showAllDay"
+        [selected]="(Filter$ | async).uiFilters.showAllDay"
         [(ngModel)]="showAllDay"
       >
         Show All Day:
       </mat-list-option>
 
-      <mat-list-option
-        ngDefaultControl
-        color="primary"
-        [value]="'showOnline'"
-        [disabled]="!(Filter$ | async).advanced.showAllDay"
-        [selected]="(Filter$ | async).advanced.showOnline"
-        [(ngModel)]="showOnline"
-      >
-        Show Online:
-      </mat-list-option>
     </mat-selection-list>
-
-  </mat-expansion-panel>
+  </div>
 
 </ng-template>
-
 
 
 <ng-template #tplActions>
@@ -374,7 +355,7 @@
     mat-button
     color="primary"
     [disabled]="disableSearch$ | async"
-    (click)="sendSearchFilters()"
+    (click)="sendFilters()"
   >
     Search
   </button>

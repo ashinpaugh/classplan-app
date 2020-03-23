@@ -6,6 +6,7 @@ import {Observable} from 'rxjs';
 export interface RoomObject {
   id: number;
   number: string;
+  sortName?: string;
 }
 
 export interface BuildingListObject {

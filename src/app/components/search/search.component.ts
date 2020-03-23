@@ -1,5 +1,5 @@
-import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Inject, Input, QueryList, ViewChild, ViewChildren, ViewEncapsulation} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren, ViewEncapsulation} from '@angular/core';
+import {MatDialogRef} from '@angular/material/dialog';
 import {MatCheckbox, MatCheckboxChange} from '@angular/material/checkbox';
 import {MatExpansionPanel} from '@angular/material/expansion';
 import {MatSelectionListChange} from '@angular/material/list';
@@ -8,48 +8,18 @@ import {GithubComponent} from 'ngx-color/github';
 import {ColorEvent} from 'ngx-color';
 import {TermService} from '../../services/term/term.service';
 import {BlockObject, TermObject} from '../../services/term/term.interfaces';
-import {BasicObject, Dictionary} from '../../interfaces/dictionary';
+import {BasicObject} from '../../interfaces/dictionary';
 import {AbstractComponent} from '../abstract-component';
 import {SubjectService} from '../../services/subject/subject.service';
 import {InstructorService} from '../../services/instructor/instructor.service';
-import {BuildingService, UISafeBuilding} from '../../services/building/building.service';
+import {BuildingService} from '../../services/building/building.service';
 import {SectionMeetingType} from '../../services/section/section.interfaces';
 import {SectionService} from '../../services/section/section.service';
-import {RoomService} from '../../services/room/room.service';
 import {DomUtil} from '../../classes/tools/dom.util';
-import {BehaviorSubject, combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
-import {debounceTime, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {FilterHelper, SearchFilters, UIFilters} from './helper/filter.helper';
+import {combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
+import {debounceTime, distinctUntilChanged, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
-
-export interface CalendarColorMatrix {
-  block: Dictionary<ColorEvent>;
-  subject: Dictionary<ColorEvent>;
-  instructor: Dictionary<ColorEvent>;
-  building: Dictionary<ColorEvent>;
-  room: Dictionary<ColorEvent>;
-}
-
-export interface SearchFilters {
-  term: TermObject;
-  blocks: BlockObject[];
-  subjects: BasicObject[];
-  instructors: BasicObject[];
-  buildings: UISafeBuilding[];
-  rooms: BasicObject[];
-}
-
-export interface AdvancedFilters extends SearchFilters {
-  advanced: {
-    colors: CalendarColorMatrix;
-    showAllDay: boolean;
-    showOnline: boolean;
-    meetingTypes: SectionMeetingType[],
-    xref: {
-      subjects: boolean;
-      instructors: boolean;
-    }
-  };
-}
 
 @Component({
   selector: 'classplan-search',
@@ -60,10 +30,9 @@ export interface AdvancedFilters extends SearchFilters {
 })
 export class SearchComponent extends AbstractComponent implements AfterViewInit {
 
-  static filters$: BehaviorSubject<AdvancedFilters>;
+  @Output() filtersChange: EventEmitter<SearchFilters> = new EventEmitter<SearchFilters>();
 
   @ViewChildren(NgSelectComponent) ngSelects: QueryList<NgSelectComponent>;
-  @ViewChild(MatExpansionPanel, { static: false }) refAdvancedFiltersPanel: MatExpansionPanel;
   @ViewChild('refTermSearch', { static: false }) refTerm: NgSelectComponent;
   @ViewChild('refBlockSearch', { static: false }) refBlock: NgSelectComponent;
   @ViewChild('refBuildingSearch', { static: false }) refBuilding: NgSelectComponent;
@@ -82,12 +51,11 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   instructors$: Observable<BasicObject[]>;
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: SearchFilters,
+    // @Inject(MAT_DIALOG_DATA) public data: SearchFilters,
     protected elementRef: ElementRef,
     protected dialogRef: MatDialogRef<SearchComponent>,
     protected terms: TermService,
     protected buildings: BuildingService,
-    protected rooms: RoomService,
     protected subjects: SubjectService,
     protected instructors: InstructorService,
     protected sections: SectionService,
@@ -95,80 +63,36 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     super();
 
     this.setMeetingTypes();
-    this.init();
   }
 
-  get Filters(): AdvancedFilters {
-    return SearchComponent.filters$.getValue();
+  get Filters(): SearchFilters {
+    return FilterHelper.filters$.getValue();
   }
 
-  set Filters(filters: AdvancedFilters) {
-    SearchComponent.filters$.next(filters);
+  set Filters(filters: SearchFilters) {
+    FilterHelper.Filters = filters;
   }
 
   get Filter$() {
-    return SearchComponent.filters$.asObservable();
+    return FilterHelper.Filters$;
   }
 
   get showAllDay() {
-    return this.Filters.advanced.showAllDay;
+    return this.Filters.uiFilters.showAllDay;
   }
 
   @Input()
   set showAllDay(show: boolean) {
-    this.setAdvancedParam('showAllDay', show);
-  }
-
-  get showOnline() {
-    return this.Filters.advanced.showOnline;
-  }
-
-  @Input()
-  set showOnline(show: boolean) {
-    this.setAdvancedParam('showOnline', show);
+    this.setUIFilter('showAllDay', show);
   }
 
   get meetingTypes() {
-    return this.Filters.advanced.meetingTypes;
+    return this.Filters.uiFilters.meetingTypes;
   }
 
   @Input()
   set meetingTypes(type: SectionMeetingType[]) {
-    this.setAdvancedParam('meetingTypes', type);
-  }
-
-  protected setAdvancedParam(param: string, value) {
-    const filters = this.Filters;
-    filters.advanced[param] = value;
-    this.Filters = filters;
-  }
-
-  protected init(reset?: boolean): void {
-    const defaultFilters: AdvancedFilters = {
-      term: undefined,
-      blocks: undefined,
-      buildings: undefined,
-      rooms: undefined,
-      subjects: undefined,
-      instructors: undefined,
-      advanced: {
-        showAllDay: true,
-        showOnline: true,
-        meetingTypes: [SectionMeetingType.Class],
-        colors: {} as CalendarColorMatrix,
-        xref: {} as any,
-      },
-    };
-
-    if (!!SearchComponent.filters$) {
-      if (reset) {
-        this.Filters = defaultFilters;
-      }
-
-      return;
-    }
-
-    SearchComponent.filters$ = new BehaviorSubject<AdvancedFilters>(defaultFilters);
+    this.setUIFilter('meetingTypes', type);
   }
 
   ngAfterViewInit(): void {
@@ -203,6 +127,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     // this.blocks$ = this.ngOnChange<TermObject>(this.refTerm)
     this.blocks$ = this.onTermChange()
       .pipe(
+        debounceTime(25),
         tap((term: TermObject) => this.log('blocks$ -> peak', term)),
         map((term: TermObject) => term && term.blocks),
         tap(blocks => {
@@ -284,21 +209,19 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
     ;
 
-    this.buildings$ = this.onTermChange(true)
+    this.buildings$ = this.refBlock.changeEvent
       .pipe(
+        distinctUntilChanged(),
         tap(blocks => this.log('building -> peak', blocks)),
         switchMap((blocks: BasicObject[]) => {
-          // When the block value's change - it can modify the values of this component.
-          this.ngSelectClear(this.refBuilding);
-
           if (!blocks || !blocks.length) {
             return of(undefined);
           }
 
-          return this.buildings.multiFetchAllByBlock(blocks);
+          return this.buildings.fetchAll();
         }),
-        shareReplay(1),
         tap(buildings => this.log('buildings -> list', buildings)),
+        shareReplay(1),
       )
     ;
 
@@ -310,14 +233,15 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     this.log('filters', this.Filters);
 
     if (this.Filters.term) {
-      setTimeout(() => this.setFilters(), 0);
+      setTimeout(() => this.syncFilters(), 0);
       return;
     }
 
     // Auto-select the Full Semester block.
     this.blocks$
       .pipe(
-        debounceTime(100),
+        // Wait for ng-select to parse the update.
+        debounceTime(25),
         map(blocks => blocks && blocks.find(block => 'Full Semester' === block.name)),
         filter(fullSemester => !!fullSemester),
         takeUntil(this.ngUnsubscribe$),
@@ -332,10 +256,17 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     ;
   }
 
+  /**
+   * Remove a selected item and unset it's custom color if one was set.
+   *
+   * @param ngSelect
+   * @param type
+   * @param item
+   */
   ngSelectDeselectItem(ngSelect: NgSelectComponent, type: string, item: BasicObject) {
     ngSelect.clearItem(item);
 
-    const colors = this.Filters.advanced.colors[type];
+    const colors = this.Filters.uiFilters.colors[type];
 
     if (!colors || !colors[item.id]) {
       return;
@@ -344,34 +275,14 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     delete colors[item.id];
   }
 
-  advancedChanged(data: MatSelectionListChange) {
-    this.log('advancedChanged', data);
-    const option = data.option.value;
-    const filters = this.Filters;
-    filters.advanced[option] = data.option.selected;
-
-    this.Filters = filters;
-  }
-
-  sendSearchFilters() {
-    // Set the filters for reference when the search component is re-opened.
-    this.Filters = this.getFilters();
-
-    this.dialogRef.close({
-      filters: this.Filters,
-    });
-  }
-
-  clearFilters() {
-    this.init(true);
-
-    this.ngSelects.forEach(select => select.clearModel());
-  }
-
-  close() {
-    this.dialogRef.close(undefined);
-  }
-
+  /**
+   * Triggered when an option label is clicked.
+   *
+   * @param event
+   * @param type
+   * @param optionValue
+   * @param colorPallet
+   */
   ngOptionLabelClick(event: MouseEvent, type: string, optionValue, colorPallet: GithubComponent) {
     this.log('ngOptionLabelClick', event, optionValue);
 
@@ -400,21 +311,56 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         takeUntil(onDestroy$),
         tap(e => this.debug('ngOptionLabelClick -> onChange', e, event.target)),
       )
-      .subscribe((colorEvent: ColorEvent) => {
-        const parent = (event.target as HTMLElement).parentElement.parentElement;
-        this.log('ngOptionLabelClick -> color change', parent, colorEvent);
-        parent.style.backgroundColor = colorEvent.color.hex;
-
-        if (!this.Filters.advanced.colors[type]) {
-          this.Filters.advanced.colors[type] = {};
-        }
-
-        this.Filters.advanced.colors[type][optionValue.id] = colorEvent.color.hex;
-      })
+      .subscribe((colorEvent: ColorEvent) => FilterHelper.setOptionColor(type, optionValue, event, colorEvent))
     ;
   }
 
-  protected setFilters() {
+  /**
+   * Handles the checkbox changes.
+   *
+   * @param data
+   */
+  advancedCheckChanged(data: MatSelectionListChange) {
+    this.log('advancedCheckChanged', data);
+
+    this.setUIFilter(data.option.value, data.option.selected);
+  }
+
+  /**
+   * Emit a filter changed event on close.
+   */
+  sendFilters() {
+    // Set the filters for reference when the search component is re-opened.
+    FilterHelper.syncComponentValues(this);
+
+    this.filtersChange.emit(this.Filters);
+
+    this.close();
+  }
+
+  /**
+   * Reset the filters to their default values.
+   */
+  clearFilters() {
+    FilterHelper.setup(true);
+
+    this.ngSelects.forEach(select => select.clearModel());
+  }
+
+  /**
+   * Closes the search dialog.
+   */
+  close() {
+    this.dialogRef.close();
+  }
+
+  protected setUIFilter(param: keyof UIFilters, value) {
+    const filters = this.Filters;
+    filters.uiFilters[param] = value;
+    this.Filters = filters;
+  }
+
+  protected syncFilters() {
     const termOption = this.refTerm.itemsList
       .findByLabel(this.Filters.term.name)
     ;
@@ -423,12 +369,11 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       return;
     }
 
-    this.showAllDay = this.Filters.advanced.showAllDay;
-    this.showOnline = this.Filters.advanced.showOnline;
-    this.meetingTypes = this.Filters.advanced.meetingTypes;
+    this.showAllDay = this.Filters.uiFilters.showAllDay;
+    this.meetingTypes = this.Filters.uiFilters.meetingTypes;
 
-    this.refChkSubjectsByInstructors.checked = this.Filters.advanced.xref.subjects;
-    this.refChkInstructorsBySubject.checked  = this.Filters.advanced.xref.instructors;
+    this.refChkSubjectsByInstructors.checked = this.Filters.uiFilters.xref.subjects;
+    this.refChkInstructorsBySubject.checked  = this.Filters.uiFilters.xref.instructors;
 
     this.refTerm.select(termOption);
 
@@ -461,47 +406,6 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     syncFilterWithSelect(this.refInstructor, this.instructors$, this.Filters.instructors);
     syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.buildings, true);
     syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.rooms, true);
-
-    this.openAdvancedPanelOnSetFilter();
-  }
-
-  protected openAdvancedPanelOnSetFilter(): void {
-    if (this.showAllDay && this.showOnline) {
-      return;
-    }
-
-    merge(this.refSubject.changeEvent, this.refInstructor.changeEvent)
-      .pipe(
-        switchMap(() => timer(325)),
-        take(1),
-      )
-      .subscribe(() => this.refAdvancedFiltersPanel.open())
-    ;
-  }
-
-  protected getFilters(): AdvancedFilters {
-    const ngBuildings = this.refBuilding.selectedValues as UISafeBuilding[];
-    const buildings   = ngBuildings.filter((item: UISafeBuilding) => !!item.rooms);
-    const rooms       = ngBuildings.filter((item: UISafeBuilding) => !item.rooms);
-
-    return {
-      term: this.refTerm.selectedValues[0] as TermObject,
-      blocks: this.refBlock.selectedValues as BlockObject[],
-      buildings: buildings as UISafeBuilding[],
-      rooms: [].concat(...rooms),
-      subjects: this.refSubject.selectedValues as BasicObject[],
-      instructors: this.refInstructor.selectedValues as BasicObject[],
-      advanced: {
-        colors: this.Filters.advanced.colors,
-        showAllDay: this.showAllDay,
-        showOnline: this.showOnline,
-        meetingTypes: this.meetingTypes,
-        xref: {
-          subjects: this.refChkSubjectsByInstructors.checked,
-          instructors: this.refChkInstructorsBySubject.checked,
-        }
-      },
-    };
   }
 
   /**
@@ -526,7 +430,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
    * @param records
    */
   protected setLabelColor(records: MutationRecord[]): void {
-    const colors = this.Filters.advanced.colors;
+    const colors = this.Filters.uiFilters.colors;
     const labels = records
       .filter(record => !!record.addedNodes)
       .map(record => record.target)
@@ -579,7 +483,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       .pipe(mapTo(this.refBlock.selectedValues))
     ;
 
-    return merge(mappedTermEvents$, blockChange$) as Observable<BlockObject[]>;
+    return (merge(mappedTermEvents$, blockChange$) as Observable<BlockObject[]>)
+      // .pipe(tap(value => this.log('onTermChange', value)),)
+    ;
   }
 
   /**

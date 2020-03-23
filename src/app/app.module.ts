@@ -8,9 +8,8 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialogModule} from '@angular/material/dialog';
-import {SearchComponentModule} from './components/search/search.module';
-import {CalendarComponentModule} from './components/calendar/calendar.module';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {ComponentsModule} from './components/components.module';
 
 @NgModule({
   declarations: [AppComponent],
@@ -23,10 +22,9 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
     MatMenuModule,
     MatButtonModule,
     MatDialogModule,
-
-    SearchComponentModule,
-    CalendarComponentModule,
     MatProgressSpinnerModule,
+
+    ComponentsModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

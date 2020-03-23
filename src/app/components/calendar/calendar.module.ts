@@ -7,7 +7,9 @@ import {CalendarComponent} from './calendar.component';
 
 
 @NgModule({
-  declarations: [CalendarComponent],
+  declarations: [
+    CalendarComponent,
+  ],
   imports: [
     CommonModule,
     FormsModule,

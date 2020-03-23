@@ -8,9 +8,9 @@ import tippy, {hideAll} from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionObject} from '../../services/section/section.interfaces';
-import {AdvancedFilters} from '../search/search.component';
 import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
+import {catchError, filter, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
+import {SearchFilters} from '../search/helper/filter.interfaces';
 
 /**
  * @see https://fullcalendar.io/docs/header
@@ -50,13 +50,13 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   @Input() plugins: PluginDef[];
   @Input() header: CalendarHeader;
-  @Input() filters: AdvancedFilters;
+  @Input() filters: SearchFilters;
   @Input() allDaySlot: boolean = true;
 
   @Output() events: EventEmitter<EventObject[]>;
 
   events$: Observable<EventObject[]>;
-  filters$: BehaviorSubject<AdvancedFilters>;
+  filters$: BehaviorSubject<SearchFilters>;
 
   constructor(
     protected elementRef: ElementRef,
@@ -68,21 +68,21 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     this.header = this.getCalendarHeaderConfig();
     this.plugins = [dayGridPlugin, timeGridPlugin];
 
-    this.filters$ = new BehaviorSubject<AdvancedFilters>(undefined);
+    this.filters$ = new BehaviorSubject<SearchFilters>(undefined);
     this.events   = new EventEmitter<EventObject[]>();
   }
 
   ngOnInit() {
     this.events$ = this.filters$.asObservable()
       .pipe(
-        switchMap((filters: AdvancedFilters) => {
+        switchMap((filters: SearchFilters) => {
           hideAll({duration: 0});
 
           if (!filters || !filters.blocks || !filters.blocks.length) {
             return of([]);
           }
 
-          return this.fullcalendar.fetchAll(filters, filters.advanced.colors);
+          return this.fullcalendar.fetchAll(filters, filters.uiFilters.colors);
         }),
         catchError(() => {
           this.snackBar.open(
@@ -99,7 +99,10 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     ;
 
     this.events$
-      .pipe(takeUntil(this.ngUnsubscribe$))
+      .pipe(
+        filter(() => !!this.filters$.getValue().term),
+        takeUntil(this.ngUnsubscribe$),
+      )
       .subscribe(events => {
         this.events.next(events);
 
@@ -121,8 +124,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('filters' in changes) {
-      if (!!changes.filters.currentValue && !!changes.filters.currentValue.advanced) {
-        this.allDaySlot = (changes.filters.currentValue as AdvancedFilters).advanced.showAllDay;
+      if (!!changes.filters.currentValue && !!changes.filters.currentValue.uiFilters) {
+        this.allDaySlot = (changes.filters.currentValue as SearchFilters).uiFilters.showAllDay;
       }
 
       this.filters$.next(changes.filters.currentValue);

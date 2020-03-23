@@ -1,11 +1,12 @@
 import {ChangeDetectionStrategy, Component, OnInit, TemplateRef, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {AbstractComponent} from './components/abstract-component';
-import {AdvancedFilters, SearchComponent} from './components/search/search.component';
+import {SearchComponent} from './components/search/search.component';
 import {CalendarComponent} from './components/calendar/calendar.component';
 import {UpdateObject, UpdateService} from './services/update/update.service';
 import {SectionService} from './services/section/section.service';
-import {BehaviorSubject, Observable} from 'rxjs';
+import * as Filters from './components/search/helper/filter.helper';
+import {Observable} from 'rxjs';
 import {filter, map, shareReplay, startWith, take, takeUntil} from 'rxjs/operators';
 
 @Component({
@@ -18,10 +19,10 @@ import {filter, map, shareReplay, startWith, take, takeUntil} from 'rxjs/operato
 export class AppComponent extends AbstractComponent implements OnInit {
 
   @ViewChild(CalendarComponent, { static: true }) refCalendar: CalendarComponent;
+  @ViewChild(SearchComponent, { static: true }) refSearch: SearchComponent;
   @ViewChild('tplLoadingSpinner', { static: true }) refLoadingSpinner: TemplateRef<any>;
 
-  filters$: BehaviorSubject<AdvancedFilters>;
-
+  filters$: Observable<Filters.SearchFilters>;
   noFilters$: Observable<boolean>;
   noEvents$: Observable<boolean>;
   updateProgress$: Observable<number>;
@@ -32,16 +33,18 @@ export class AppComponent extends AbstractComponent implements OnInit {
     protected sections: SectionService,
   ) {
     super();
-
-    this.filters$ = new BehaviorSubject<AdvancedFilters>(undefined);
   }
 
   /**
    * @inheritDoc
    */
   ngOnInit(): void {
-    this.noFilters$ = this.filters$.asObservable()
-      .pipe(map(filters => !filters))
+    Filters.FilterHelper.setup();
+
+    this.filters$ = Filters.FilterHelper.Filters$;
+
+    this.noFilters$ = this.filters$
+      .pipe(map(filters => !filters || !filters.term || !filters.term.id))
     ;
 
     this.noEvents$ = this.refCalendar.events.asObservable()
@@ -63,28 +66,20 @@ export class AppComponent extends AbstractComponent implements OnInit {
    * Open the search filters modal.
    */
   openSearch(): void {
-    const searchModal = this.dialog.open(SearchComponent, {
+    this.dialog.open(SearchComponent, {
       position: {top: '5vh'},
       width: '50%',
       minHeight: 560,
       minWidth: 325,
       height: 'auto',
     });
-
-    searchModal.afterClosed()
-      .pipe(
-        take(1),
-        filter(data => !!data),
-      )
-      .subscribe((data: {filters: AdvancedFilters}) => this.filters$.next(data.filters))
-    ;
   }
 
   /**
    * Download the current events to a csv.
    */
-  downloadExport(): void {
-    this.sections.getExportStream(this.filters$.getValue())
+  async downloadExport() {
+    this.sections.getExportStream(Filters.FilterHelper.Filters)
       .then(async response => await this.sections.handleStreamDownload(response))
     ;
   }
@@ -93,9 +88,7 @@ export class AppComponent extends AbstractComponent implements OnInit {
    * Reset the UI.
    */
   clearFiltersAndEvents(): void {
-    SearchComponent.filters$ = undefined;
-
-    this.filters$.next(undefined);
+    Filters.FilterHelper.setup(true);
   }
 
   /**

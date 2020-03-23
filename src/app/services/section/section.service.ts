@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
 import {SectionFetchAllParams, SectionObject} from './section.interfaces';
+import {environment} from '../../../environments/environment';
+import {SearchFilters} from '../../components/search/helper/filter.helper';
 import {Observable, of} from 'rxjs';
 import {map, tap} from 'rxjs/operators';
-import {environment} from '../../../environments/environment';
-import {AdvancedFilters} from '../../components/search/search.component';
 
 @Injectable({
   providedIn: 'root'
@@ -46,7 +46,7 @@ export class SectionService extends AbstractService {
    *
    * @param filters
    */
-  getExportStream(filters: AdvancedFilters): Promise<Response> {
+  getExportStream(filters: SearchFilters): Promise<Response> {
     const params = this.filtersToSectionParams(filters);
 
     return fetch(environment.apiUrl + 'download', {
@@ -91,7 +91,7 @@ export class SectionService extends AbstractService {
    *
    * @param filters
    */
-  filtersToSectionParams(filters: AdvancedFilters): SectionFetchAllParams {
+  filtersToSectionParams(filters: SearchFilters): SectionFetchAllParams {
     const getIds = (set: {id: number}[]): number[] => {
       return set.map(item => item.id);
     };
@@ -102,9 +102,7 @@ export class SectionService extends AbstractService {
       instructor: getIds(filters.instructors),
       building: getIds(filters.buildings),
       room: getIds(filters.rooms),
-      allDay: Number(filters.advanced.showAllDay),
-      online: Number(filters.advanced.showOnline),
-      meetingType: filters.advanced.meetingTypes,
+      meetingType: filters.uiFilters.meetingTypes,
     };
   }
 }

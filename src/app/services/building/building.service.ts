@@ -13,7 +13,8 @@ export interface BuildingObject {
   short_name: string;
 }
 
-export type UISafeBuilding = (BasicObject & {rooms: BasicObject[]});
+export type UISafeRoom     = (BasicObject & {sortName: string});
+export type UISafeBuilding = (BasicObject & {rooms: UISafeRoom[]});
 
 @Injectable({
   providedIn: 'root'
@@ -24,34 +25,11 @@ export class BuildingService extends AbstractService {
     super();
   }
 
-  fetchAll(blockId: number) : Observable<BuildingObject[]> {
-    return this.doFetchAll(`term/${blockId}/buildings.json`)
-      .pipe(map((payload: {buildings: BuildingObject[]}) => payload.buildings))
-    ;
-  }
-
-  fetch(id: number) {
-    return this.doFetch(`building/${id}.json`);
-  }
-
-  fetchAllByBlock(blockId: number): Observable<BuildingObject[]> {
-    return this.fetchAll(blockId)
+  fetchAll() : Observable<UISafeBuilding[]> {
+    return this.doFetchAll(`buildings.json`)
       .pipe(
-        map(results => [].concat(...results)),
-        tap((results: BuildingObject[]) => this.debug('fetchAllByBuilding', results))
-      )
-    ;
-  }
-
-  multiFetchAllByBlock(blocks: BasicObject[]): Observable<UISafeBuilding[]> {
-    const requests$ = blocks.map(block => this.fetchAllByBlock(block.id));
-
-    return merge(...requests$)
-      .pipe(
-        scan((acc: UISafeBuilding[], rows: BuildingObject[]) => {
-          const results = rows
-            // Prevent duplicate buildings. The api automatically returns all used rooms for a building.
-            .filter(row => acc.find(current => current.id === row.id) === undefined)
+        map((payload: {buildings: BuildingObject[]}) => {
+          const results = payload.buildings
             .map(data => {
               return {
                 id:    data.id,
@@ -69,27 +47,53 @@ export class BuildingService extends AbstractService {
             })
           ;
 
-          return acc.concat(results);
-        }, []),
-        map(buildings => {
-          buildings.forEach((building) => {
-            building.rooms = building.rooms
-              .sort((a: BasicObject & {sortName: string}, b: BasicObject & {sortName: string}) => {
-                if (a.sortName < b.sortName) {
-                  return -1;
-                }
-
-                if (a.sortName > b.sortName) {
-                  return 1;
-                }
-
-                return 0;
-              });
-          });
-
-          return buildings;
-        })
+          return this.sortAlpha(results);
+        }),
       )
+    ;
+  }
+
+  fetch(id: number) {
+    return this.doFetch(`building/${id}.json`);
+  }
+
+  fetchAllByBlock(blockId: number): Observable<BuildingObject[]> {
+    return this.doFetchAll(`term/${blockId}/buildings.json`)
+      .pipe(
+        map((payload: {buildings: BuildingObject[]}) => payload.buildings),
+        tap((results: BuildingObject[]) => this.debug('fetchAllByBlock -> peak', results)),
+        map(results => [].concat(...results)),
+        tap((results: BuildingObject[]) => this.debug('fetchAllByBlock', results)),
+      )
+    ;
+  }
+
+
+  /**
+   * Sort buildings and their rooms.
+   *
+   * @param buildings
+   */
+  protected sortAlpha(buildings: UISafeBuilding[]) {
+    const sort = (a, b, key) => {
+      if (a[key] < b[key]) {
+        return -1;
+      }
+
+      if (a[key] > b[key]) {
+        return 1;
+      }
+
+      return 0;
+    };
+
+    return buildings
+      .sort((a, b) => sort(a, b, 'name'))
+      .map(building => {
+        building.rooms = building.rooms.sort((a, b) => sort(a, b, 'sortName'));
+
+        return building
+      })
     ;
   }
 }

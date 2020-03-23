@@ -18,8 +18,6 @@ export interface SectionFetchAllParams extends ApiParams {
   building: number[];
   room: number[];
   meetingType: SectionMeetingType[];
-  allDay: number;
-  online: number;
 }
 
 

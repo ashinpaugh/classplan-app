@@ -3,7 +3,7 @@ import {AbstractLoggable} from '../../classes/abstract-loggable';
 import {SectionService} from '../section/section.service';
 import {SectionObject} from '../section/section.interfaces';
 import {Dictionary} from '../../interfaces/dictionary';
-import {AdvancedFilters, CalendarColorMatrix} from '../../components/search/search.component';
+import {CalendarColorMatrix, SearchFilters} from '../../components/search/helper/filter.helper';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
@@ -52,7 +52,7 @@ export class FullCalendarService extends AbstractLoggable {
    * @param filters
    * @param colors
    */
-  fetchAll(filters: AdvancedFilters, colors: CalendarColorMatrix): Observable<EventObject[]> {
+  fetchAll(filters: SearchFilters, colors: CalendarColorMatrix): Observable<EventObject[]> {
     const params = this.sections.filtersToSectionParams(filters);
 
     return this.sections.fetchAll(params)
