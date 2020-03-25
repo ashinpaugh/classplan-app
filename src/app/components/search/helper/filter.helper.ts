@@ -13,10 +13,6 @@ export class FilterHelper {
 
   static filters$: BehaviorSubject<SearchHelpers.SearchFilters>;
 
-  constructor() {
-    FilterHelper.filters$ = new BehaviorSubject<SearchHelpers.SearchFilters>(FilterHelper.DefaultFilters);
-  }
-
   static set Filters(filters: SearchHelpers.SearchFilters) {
     FilterHelper.filters$.next(filters);
   }
@@ -51,7 +47,7 @@ export class FilterHelper {
 
   static setup(reset?: boolean) {
     if (!FilterHelper.filters$) {
-      FilterHelper.filters$ = new BehaviorSubject<SearchHelpers.SearchFilters>(FilterHelper.DefaultFilters);
+      FilterHelper.filters$ = new BehaviorSubject<SearchHelpers.SearchFilters>(undefined);
     }
 
     if (reset) {
@@ -107,4 +103,3 @@ export class FilterHelper {
 
 }
 
-// export const SearchFilters = new FilterHelper();

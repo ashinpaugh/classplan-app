@@ -72,17 +72,13 @@ export class FullCalendarService extends AbstractLoggable {
    *
    * @param events
    */
-  getEarliestSectionStart(events?: EventObject[]): string {
-    const format = (date: Date) => {
-      return date.toISOString().split('T')[0];
-    };
-
+  getEarliestSectionStart(events: EventObject[]): Date {
     const startParam = (event: EventObject) => {
       return event.startRecur ? event.startRecur : event.start;
     };
 
     if (!events || !events.length) {
-      return format(new Date());
+      return new Date();
     }
 
     const sortedSections = events.sort((a, b) => {
@@ -100,11 +96,16 @@ export class FullCalendarService extends AbstractLoggable {
       return 0;
     });
 
-    // Parse the earliest start date, and then move it forward 2 weeks to account for MLK day.
-    const startDay = new Date(startParam(sortedSections[0]));
-    startDay.setDate(startDay.getDate() + 14);
+    return new Date(startParam(sortedSections[0]));
+  }
 
-    return format(startDay);
+  /**
+   * Turns a date into a fullcalendar 'parsable' date.
+   *
+   * @param date
+   */
+  formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
   }
 
   /**
@@ -203,7 +204,7 @@ export class FullCalendarService extends AbstractLoggable {
   }
 
   protected isOnline(section: SectionObject): boolean {
-    return 'WEB' === section.building.name;
+    return section.building && 'WEB' === section.building.name;
   }
 
   /**

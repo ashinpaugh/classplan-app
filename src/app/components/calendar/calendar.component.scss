@@ -1,6 +1,12 @@
 classplan-calendar {
   div.ou-calendar {
     margin: 32px;
+
+    full-calendar {
+      td.fc-today {
+        background: unset;
+      }
+    }
   }
 
   div.tippy-tooltip {

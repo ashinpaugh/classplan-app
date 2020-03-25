@@ -4,37 +4,16 @@ import {FullCalendarComponent} from '@fullcalendar/angular';
 import {PluginDef} from "@fullcalendar/core/plugin-system";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import {ToolbarInput, ViewOptionsInput} from '@fullcalendar/core/types/input-types';
 import tippy, {hideAll} from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
-import {SectionObject} from '../../services/section/section.interfaces';
-import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, filter, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
+import {SectionMeetingType, SectionObject} from '../../services/section/section.interfaces';
 import {SearchFilters} from '../search/helper/filter.interfaces';
+import {BehaviorSubject, Observable, of} from 'rxjs';
+import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 
-/**
- * @see https://fullcalendar.io/docs/header
- *
- * Setting the header options to false will display no header.
- * An object can be supplied with properties left, center, and right.
- * These properties contain strings with comma/space separated values.
- * Values separated by a comma will be displayed adjacently.
- * Values separated by a space will be displayed with a small gap in between.
- * Strings can contain any of the following values:
- * - title
- * - prev
- * - next
- * - prevYear
- * - nextYear
- * - today
- * - a view name: button that will switch the calendar to any of the available views
- * - '' (no value): Specifying an empty string for a property will cause it display no text/buttons.
- */
-export interface CalendarHeader {
-  left: string;
-  center: string;
-  right: string;
-}
+type ViewOptions = { [viewId: string]: ViewOptionsInput };
 
 @Component({
   selector: 'classplan-calendar',
@@ -48,12 +27,15 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   @ViewChild(FullCalendarComponent, { static: true }) refFullCalendar: FullCalendarComponent;
   @ViewChild('toolTip', { static: true, read: ElementRef }) refTooltip: ElementRef;
 
+  @Input() views: ViewOptions;
   @Input() plugins: PluginDef[];
-  @Input() header: CalendarHeader;
   @Input() filters: SearchFilters;
   @Input() allDaySlot: boolean = true;
 
   @Output() events: EventEmitter<EventObject[]>;
+
+  // @see https://fullcalendar.io/docs/header
+  header: boolean | ToolbarInput;
 
   events$: Observable<EventObject[]>;
   filters$: BehaviorSubject<SearchFilters>;
@@ -65,7 +47,6 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   ) {
     super();
 
-    this.header = this.getCalendarHeaderConfig();
     this.plugins = [dayGridPlugin, timeGridPlugin];
 
     this.filters$ = new BehaviorSubject<SearchFilters>(undefined);
@@ -73,6 +54,9 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   }
 
   ngOnInit() {
+    this.views  = this.views ? this.views : this.getCalendarViewOptions();
+    this.header = this.header ? this.header : this.views.timeGridWeek.header;
+
     this.events$ = this.filters$.asObservable()
       .pipe(
         switchMap((filters: SearchFilters) => {
@@ -85,6 +69,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           return this.fullcalendar.fetchAll(filters, filters.uiFilters.colors);
         }),
         catchError(() => {
+
           this.snackBar.open(
             `An error occurred while fetching your classes. Please try again, or reduce your filter complexity.`,
             undefined,
@@ -99,25 +84,21 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     ;
 
     this.events$
-      .pipe(
-        filter(() => !!this.filters$.getValue().term),
-        takeUntil(this.ngUnsubscribe$),
-      )
+      .pipe(takeUntil(this.ngUnsubscribe$))
       .subscribe(events => {
         this.events.next(events);
 
         if (!events || !events.length) {
           const filters = this.filters$.getValue();
 
-          if (filters && Object.keys(filters).length > 0) {
+          if (filters && !!filters.term && !!filters.term.id) {
             this.snackBar.open('No results found.', undefined, {duration: 5000});
           }
 
           return;
         }
 
-        const startDate = this.fullcalendar.getEarliestSectionStart(events);
-        this.refFullCalendar.getApi().gotoDate(startDate);
+        this.positionCalendar(events);
       })
     ;
   }
@@ -139,6 +120,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
    */
   calendarRendered(event: {view: any, el: HTMLElement}): void {
     this.setTitle();
+    this.header = this.views[event.view.type].header;
   }
 
   /**
@@ -178,6 +160,23 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   }
 
   /**
+   * Parse the earliest start date, and then move it forward 2 weeks to account for MLK day.
+   *
+   * @param events
+   */
+  protected positionCalendar(events: EventObject[]): void {
+    const hasExam  = !!events.find(e => e.extendedProps.section.meeting_type === SectionMeetingType.Exam);
+    const jumpDays = hasExam ? 0 : 14;
+
+    const startDate = this.fullcalendar.getEarliestSectionStart(events);
+    startDate.setDate(startDate.getDate() + jumpDays);
+
+    this.refFullCalendar.getApi().gotoDate(
+      this.fullcalendar.formatDate(startDate)
+    );
+  }
+
+  /**
    * Create a tooltip for event hover events.
    *
    * @param section
@@ -192,6 +191,16 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
     if (!section.days) {
       days = '';
+    }
+
+    let buildingName = !!section.campus ? section.campus.name : '';
+
+    if (!!buildingName && !!section.building) {
+      buildingName += `<br /> ${section.building.name}`;
+
+      if (!!section.room) {
+        buildingName += `- ${section.room.number}`;
+      }
     }
 
     return `
@@ -215,9 +224,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           <div class="row">
             <span class="label">Location:</span>
             <div class="value">
-              ${section.campus.name}
-              <br/>
-              ${section.building.name} - ${section.room.number}
+              ${buildingName}
             </div>
           </div>
 
@@ -235,11 +242,29 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   /**
    * Get the default options for setting FC's toolbar content layout.
    */
-  protected getCalendarHeaderConfig(overrides?: object) {
-    const headers = {
+  protected getCalendarViewOptions(overrides?: ViewOptions) {
+    const defaultHeader = {
       left: 'prev,next',
       center: 'title',
       right: 'timeGridWeek,timeGridDay,dayGridWeek',
+    };
+
+    const headers = {
+      timeGridWeek: {
+        buttonText: 'default',
+        header: defaultHeader,
+        columnHeaderFormat: { weekday: 'short' }
+      },
+      timeGridDay: {
+        buttonText: 'single',
+        header: defaultHeader,
+        columnHeaderFormat: { weekday: 'long' },
+      },
+      dayGridWeek: {
+        buttonText: 'compressed',
+        header: defaultHeader,
+        columnHeaderFormat: { weekday: 'short' },
+      }
     };
 
     return Object.assign(headers, overrides || {});

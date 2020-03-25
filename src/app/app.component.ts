@@ -123,8 +123,7 @@ export class AppComponent extends AbstractComponent implements OnInit {
       )
       .subscribe(
         () => modal.close(),
-        err => this.warn('parseUpdateLog -> modal', err),
-        () => this.warn('parseUpdateLog -> complete')
+        err => this.warn('parseUpdateLog -> modal', err)
       )
     ;
   }

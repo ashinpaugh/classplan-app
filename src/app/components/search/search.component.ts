@@ -63,6 +63,10 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     super();
 
     this.setMeetingTypes();
+
+    if (!this.Filters) {
+      FilterHelper.setup(true);
+    }
   }
 
   get Filters(): SearchFilters {

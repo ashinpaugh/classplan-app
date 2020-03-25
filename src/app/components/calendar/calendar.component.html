@@ -1,27 +1,25 @@
 
 <div class="ou-calendar">
+
   <full-calendar
     defaultView="timeGridWeek"
     minTime="08:00:00"
     maxTime="22:00:00"
     contentHeight="auto"
-    [columnHeaderFormat]="{ weekday: 'short' }"
+    allDayText="unassigned"
     [startParam]="null"
     [endParam]="null"
     [lazyFetching]="true"
     [allDaySlot]="1 == (filters$ | async)?.uiFilters.showAllDay"
     [weekends]="false"
     [plugins]="plugins"
-    [header]="header"
     [events]="events$ | async"
     [eventOrder]="['start', 'allDay', 'backgroundColor']"
-    [views]="{
-      timeGridWeek: {buttonText: 'default'},
-      timeGridDay: {buttonText: 'single'},
-      dayGridWeek: {buttonText: 'compressed'}
-    }"
+    [views]="views"
+    [header]="header"
     (viewSkeletonRender)="calendarRendered($event)"
     (eventRender)="eventRender($event)"
     (datesRender)="datesRendered($event)"
   ></full-calendar>
+
 </div>
