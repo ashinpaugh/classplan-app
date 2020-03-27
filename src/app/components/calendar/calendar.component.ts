@@ -34,11 +34,11 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   @Output() events: EventEmitter<EventObject[]>;
 
-  // @see https://fullcalendar.io/docs/header
-  header: boolean | ToolbarInput;
-
   events$: Observable<EventObject[]>;
   filters$: BehaviorSubject<SearchFilters>;
+
+  // @see https://fullcalendar.io/docs/header
+  protected header: boolean | ToolbarInput;
 
   constructor(
     protected elementRef: ElementRef,
@@ -55,7 +55,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
   ngOnInit() {
     this.views  = this.views ? this.views : this.getCalendarViewOptions();
-    this.header = this.header ? this.header : this.views.timeGridWeek.header;
+    this.header = this.views.timeGridWeek.header;
 
     this.events$ = this.filters$.asObservable()
       .pipe(
@@ -199,7 +199,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       buildingName += `<br /> ${section.building.name}`;
 
       if (!!section.room) {
-        buildingName += `- ${section.room.number}`;
+        buildingName += ` - ${section.room.number}`;
       }
     }
 
