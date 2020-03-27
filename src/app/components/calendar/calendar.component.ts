@@ -38,7 +38,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   filters$: BehaviorSubject<SearchFilters>;
 
   // @see https://fullcalendar.io/docs/header
-  protected header: boolean | ToolbarInput;
+  header: boolean | ToolbarInput;
 
   constructor(
     protected elementRef: ElementRef,
