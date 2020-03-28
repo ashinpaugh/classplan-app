@@ -12,7 +12,7 @@
     "directive-selector": [
       true,
       "attribute",
-      "ouCp",
+      "classplan",
       "camelCase"
     ],
     "component-selector": [
