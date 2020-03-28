@@ -15,6 +15,11 @@ span.spacer {
   text-overflow: ellipsis;
 }
 
+.hyper-case {
+  text-align: justify;
+  text-transform: uppercase;
+}
+
 .hidden, [hidden], [hidden="true"] {
   display: none !important;
 }

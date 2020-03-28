@@ -236,11 +236,6 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
 
     this.log('filters', this.Filters);
 
-    if (this.Filters.term) {
-      setTimeout(() => this.syncFilters(), 0);
-      return;
-    }
-
     // Auto-select the Full Semester block.
     this.blocks$
       .pipe(
@@ -253,11 +248,17 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       .subscribe(fullSemester => {
         const ngOption = this.refBlock.itemsList.findItem(fullSemester.id);
 
-        if (ngOption) {
+        if (ngOption && !ngOption.selected) {
           this.refBlock.select(ngOption);
         }
       })
     ;
+
+    if (!this.Filters.term) {
+      return;
+    }
+
+    setTimeout(() => this.syncFilters(), 0);
   }
 
   /**

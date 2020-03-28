@@ -1,5 +1,6 @@
 <div class="cp-tooltip-content">
   <div class="header">
+
     <div class="row">
       <span class="bold">{{section.subject.name}} {{section.course.number}}: {{section.number}}</span>
       <span class="spacer"></span>
@@ -15,6 +16,15 @@
 
   <div class="body">
     <hr>
+
+    <div class="row">
+
+      <span class="label">Block</span>
+      <span class="value ellipses">
+        {{section.block.term.name}}: {{section.block.name}}
+      </span>
+    </div>
+
     <div class="row">
       <span class="label">Location:</span>
       <div class="value">
