@@ -19,10 +19,7 @@
 </mat-card>
 
 <div class="color-container" hidden>
-  <color-github
-    #colorPallet
-    triangle="hide"
-  ></color-github>
+  <color-github #colorPallet triangle="hide"></color-github>
 </div>
 
 
@@ -331,7 +328,7 @@
         [selected]="(Filter$ | async).uiFilters.showAllDay"
         [(ngModel)]="showAllDay"
       >
-        Show Unassigned:
+        Show unassigned time block:
       </mat-list-option>
 
     </mat-selection-list>

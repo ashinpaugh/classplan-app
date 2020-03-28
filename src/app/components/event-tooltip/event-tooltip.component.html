@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row" *ngIf="!!section.instructor">
       <span class="label">Instructor:</span>
       <span class="value ellipses">{{section.instructor.name}}</span>
     </div>
@@ -36,12 +36,12 @@
 
   {{section.campus.name}}
 
-  <ng-container *ngIf="section.building.name">
+  <ng-container *ngIf="!!section.building">
     <br />
     {{section.building.name}}
   </ng-container>
 
-  <ng-container *ngIf="section.building.name && section.room">
+  <ng-container *ngIf="!!section.building && !!section.room">
     - {{section.room.number}}
   </ng-container>
 

@@ -50,7 +50,7 @@ classplan-search {
             }
           }
 
-          div.mat-list-item-content {
+          .mat-list-item-content {
             width: 100%;
             padding: 0;
 
@@ -99,15 +99,16 @@ classplan-search {
       }
 
       #other-fields {
-        width: calc(100% - 32px);
+        padding: 0 16px;
         margin: 0 auto;
+        width: calc(100% - 32px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
 
         mat-form-field, mat-selection-list {
           width: 100%;
-
-          .mat-list-item-content {
-            padding: 0;
-          }
+          padding: 0 16px;
         }
       }
     }
