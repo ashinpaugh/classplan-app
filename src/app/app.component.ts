@@ -26,6 +26,7 @@ export class AppComponent extends AbstractComponent implements OnInit {
   noFilters$: Observable<boolean>;
   noEvents$: Observable<boolean>;
   updateProgress$: Observable<number>;
+  title$: Observable<string>;
 
   constructor(
     protected dialog: MatDialog,
@@ -42,6 +43,13 @@ export class AppComponent extends AbstractComponent implements OnInit {
     Filters.FilterHelper.setup();
 
     this.filters$ = Filters.FilterHelper.Filters$;
+
+    this.title$ = this.refCalendar.title
+      .pipe(
+        startWith(undefined),
+        map(title => title ? title : 'Class Plan'),
+      )
+    ;
 
     this.noFilters$ = this.filters$
       .pipe(map(filters => !filters || !filters.term || !filters.term.id))
