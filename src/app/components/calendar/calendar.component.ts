@@ -33,6 +33,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   @Input() allDaySlot: boolean = true;
 
   @Output() events: EventEmitter<EventObject[]>;
+  @Output() title:  EventEmitter<string>;
 
   events$: Observable<EventObject[]>;
   filters$: BehaviorSubject<SearchFilters>;
@@ -51,6 +52,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
 
     this.filters$ = new BehaviorSubject<SearchFilters>(undefined);
     this.events   = new EventEmitter<EventObject[]>();
+    this.title    = new EventEmitter<string>();
   }
 
   ngOnInit() {
@@ -280,6 +282,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       if (refTitle) {
         refTitle.innerHTML = title;
       }
+
+      this.title.next(title);
     };
 
     if (undefined !== override) {

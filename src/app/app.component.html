@@ -40,13 +40,14 @@
 
   </mat-menu>
 
-  <span class="spacer"></span>
+  <span id="toolbar-title" [innerHTML]="calendar.title | async"></span>
 
   <img src="app/assets/images/ou-logo-grey.png" alt="OU Logo" />
 </mat-toolbar>
 
 
 <classplan-calendar
+  #calendar
   [filters]="filters$ | async"
 ></classplan-calendar>
 

@@ -4,6 +4,11 @@ classplan-root {
     background-color: rgb(95, 20, 20);
     padding: 8px 16px;
 
+    #toolbar-title {
+      flex: 1 1 auto;
+      color: #FFF;
+    }
+
     img {
       padding-right: 16px;
       height: 100%;
