@@ -12,7 +12,9 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {ComponentsModule} from './components/components.module';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [
+    AppComponent
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -26,8 +28,10 @@ import {ComponentsModule} from './components/components.module';
 
     ComponentsModule,
   ],
+  bootstrap: [
+    AppComponent
+  ],
+  entryComponents: [],
   providers: [],
-  bootstrap: [AppComponent],
-  entryComponents: []
 })
 export class AppModule { }

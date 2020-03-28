@@ -1,0 +1,56 @@
+<div class="cp-tooltip-content">
+  <div class="header">
+    <div class="row">
+      <span class="bold">{{section.subject.name}} {{section.course.number}}: {{section.number}}</span>
+      <span class="spacer"></span>
+      <span class="bold">{{section.num_enrolled}} / {{section.maximum_enrollment}}</span>
+    </div>
+
+    <span class="spacer"></span>
+
+    <div class="bold">
+      {{(section.meeting_type === 0 ? '(Exam) ' : '') + section.course.name}}
+    </div>
+  </div>
+
+  <div class="body">
+    <hr>
+    <div class="row">
+      <span class="label">Location:</span>
+      <div class="value">
+        <ng-container *ngTemplateOutlet="tplLocation"></ng-container>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">Instructor:</span>
+      <span class="value ellipses">{{section.instructor.name}}</span>
+    </div>
+
+    <ng-container *ngTemplateOutlet="tplDays"></ng-container>
+  </div>
+</div>
+
+
+<ng-template #tplLocation>
+
+  {{section.campus.name}}
+
+  <ng-container *ngIf="section.building.name">
+    <br />
+    {{section.building.name}}
+  </ng-container>
+
+  <ng-container *ngIf="section.building.name && section.room">
+    - {{section.room.number}}
+  </ng-container>
+
+</ng-template>
+
+
+<ng-template #tplDays>
+  <div class="row" *ngIf="section.days">
+    <span class="label">Days:</span>
+    <span class="value">{{section.days}}: {{section.start_time}} - {{section.end_time}}</span>
+  </div>
+</ng-template>

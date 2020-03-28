@@ -4,6 +4,7 @@ import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {CalendarComponent} from './calendar.component';
+import {DirectivesModule} from '../../directives/directives.module';
 
 
 @NgModule({
@@ -15,6 +16,7 @@ import {CalendarComponent} from './calendar.component';
     FormsModule,
     FullCalendarModule,
     MatSnackBarModule,
+    DirectivesModule,
   ],
   bootstrap: [CalendarComponent],
   exports: [CalendarComponent],

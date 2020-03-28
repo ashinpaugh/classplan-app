@@ -8,40 +8,4 @@ classplan-calendar {
       }
     }
   }
-
-  div.tippy-tooltip {
-    color: #000;
-    background-color: #FFF;
-    border: #CCC solid 0.5px !important;
-
-    div.cp-tooltip-content {
-      display: flex;
-      flex-direction: column;
-      width: 250px;
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      .row {
-        display: flex;
-        flex-direction: row;
-      }
-
-      .bold, .body .label {
-        font-weight: bold;
-      }
-
-      .body {
-
-        .label {
-          width: 30%;
-        }
-
-        .value {
-          margin-left: 4px;
-          text-align: start;
-        }
-      }
-    }
-  }
 }

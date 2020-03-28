@@ -1,19 +1,21 @@
-import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation} from '@angular/core';
+import {ChangeDetectionStrategy, Component, ComponentFactoryResolver, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {FullCalendarComponent} from '@fullcalendar/angular';
-import {PluginDef} from "@fullcalendar/core/plugin-system";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import {PluginDef} from '@fullcalendar/core/plugin-system';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import {ToolbarInput, ViewOptionsInput} from '@fullcalendar/core/types/input-types';
 import tippy, {hideAll} from 'tippy.js';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionMeetingType, SectionObject} from '../../services/section/section.interfaces';
 import {SearchFilters} from '../search/helper/filter.interfaces';
+import {EventTooltipComponent} from '../event-tooltip/event-tooltip.component';
+import {TooltipHostDirective} from '../../directives/tooltip-host/tooltip-host.directive';
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 
-type ViewOptions = { [viewId: string]: ViewOptionsInput };
+interface ViewOptions { [viewId: string]: ViewOptionsInput }
 
 @Component({
   selector: 'classplan-calendar',
@@ -25,7 +27,7 @@ type ViewOptions = { [viewId: string]: ViewOptionsInput };
 export class CalendarComponent extends AbstractComponent implements OnInit, OnChanges {
 
   @ViewChild(FullCalendarComponent, { static: true }) refFullCalendar: FullCalendarComponent;
-  @ViewChild('toolTip', { static: true, read: ElementRef }) refTooltip: ElementRef;
+  @ViewChild(TooltipHostDirective, { static: true }) refTooltip: TooltipHostDirective;
 
   @Input() views: ViewOptions;
   @Input() plugins: PluginDef[];
@@ -33,7 +35,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   @Input() allDaySlot: boolean = true;
 
   @Output() events: EventEmitter<EventObject[]>;
-  @Output() title:  EventEmitter<string>;
+  @Output() title: EventEmitter<string>;
 
   events$: Observable<EventObject[]>;
   filters$: BehaviorSubject<SearchFilters>;
@@ -42,6 +44,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   header: boolean | ToolbarInput;
 
   constructor(
+    protected componentFactoryResolver: ComponentFactoryResolver,
     protected elementRef: ElementRef,
     protected snackBar: MatSnackBar,
     protected fullcalendar: FullCalendarService,
@@ -100,7 +103,7 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           return;
         }
 
-        this.positionCalendar(events);
+        this.shiftCalendarDate(events);
       })
     ;
   }
@@ -138,13 +141,18 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     isEnd: boolean,
     view: any
   }) {
+
     tippy(data.el, {
       allowHTML: true,
-      content: this.createTooltipContent(data.event.extendedProps.section),
       appendTo: this.elementRef.nativeElement,
       lazy: true,
       maxWidth: 320,
       onShow: () => hideAll({duration: 0}),
+      onTrigger: (instance) => {
+        const ttBody = this.renderTooltip(data.event.extendedProps.section).location.nativeElement;
+
+        instance.setContent(ttBody);
+      }
     });
 
     return data.el;
@@ -162,11 +170,30 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   }
 
   /**
+   * Update the tooltip ng-template with a new section.
+   *
+   * @param section
+   */
+  protected renderTooltip(section: SectionObject) {
+    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(EventTooltipComponent);
+    const viewContainerRef = this.refTooltip.viewContainerRef;
+
+    viewContainerRef.clear();
+
+    const componentRef = viewContainerRef.createComponent(componentFactory);
+    componentRef.instance.section = section;
+
+    componentRef.changeDetectorRef.detectChanges();
+
+    return componentRef;
+  }
+
+  /**
    * Parse the earliest start date, and then move it forward 2 weeks to account for MLK day.
    *
    * @param events
    */
-  protected positionCalendar(events: EventObject[]): void {
+  protected shiftCalendarDate(events: EventObject[]): void {
     const hasExam  = !!events.find(e => e.extendedProps.section.meeting_type === SectionMeetingType.Exam);
     const jumpDays = hasExam ? 0 : 14;
 
@@ -179,75 +206,12 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   }
 
   /**
-   * Create a tooltip for event hover events.
-   *
-   * @param section
-   */
-  protected createTooltipContent(section: SectionObject): string {
-    let days = `
-      <div class="row">
-        <span class="label">Days:</span>
-        <span class="value">${section.days}: ${section.start_time} - ${section.end_time}</span>
-      </div>
-    `;
-
-    if (!section.days) {
-      days = '';
-    }
-
-    let buildingName = !!section.campus ? section.campus.name : '';
-
-    if (!!buildingName && !!section.building) {
-      buildingName += `<br /> ${section.building.name}`;
-
-      if (!!section.room) {
-        buildingName += ` - ${section.room.number}`;
-      }
-    }
-
-    return `
-      <div class="cp-tooltip-content">
-        <div class="header">
-          <div class="row">
-            <span class="bold">${section.subject.name} ${section.course.number}: ${section.number}</span>
-            <span class="spacer"></span>
-            <span class="bold">${section.num_enrolled} / ${section.maximum_enrollment}</span>
-          </div>
-
-          <span class="spacer"></span>
-
-          <div class="bold">
-            ${(section.meeting_type === 0 ? '(Exam) ' : '') + section.course.name}
-          </div>
-        </div>
-
-        <div class="body">
-          <hr>
-          <div class="row">
-            <span class="label">Location:</span>
-            <div class="value">
-              ${buildingName}
-            </div>
-          </div>
-
-          <div class="row">
-            <span class="label">Instructor:</span>
-            <span class="value ellipses">${section.instructor.name}</span>
-          </div>
-
-          ${days}
-        </div>
-      </div>
-    `;
-  }
-
-  /**
    * Get the default options for setting FC's toolbar content layout.
    */
   protected getCalendarViewOptions(overrides?: ViewOptions) {
     const defaultHeader = {
       left: 'prev,next',
-      center: 'title',
+      center: '',
       right: 'timeGridWeek,timeGridDay,dayGridWeek',
     };
 
