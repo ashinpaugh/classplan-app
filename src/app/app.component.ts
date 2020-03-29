@@ -102,11 +102,11 @@ export class AppComponent extends AbstractComponent implements OnInit {
   /**
    * Poll the update service in order to inform the user when the update has complete.
    *
-   * @param log
+   * @param update
    */
-  protected parseUpdateLog(log: UpdateObject) {
-    if (log.end) {
-      return this.debug('parseUpdateLog: app ready', log);
+  protected parseUpdateLog(update: UpdateObject) {
+    if (update.end) {
+      return this.debug('parseUpdateLog: app ready', update);
     }
 
     const modal = this.dialog.open(this.refLoadingSpinner, {
