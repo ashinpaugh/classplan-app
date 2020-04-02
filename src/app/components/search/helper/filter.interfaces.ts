@@ -19,7 +19,7 @@ export interface UIFilters {
   xref: {
     subjects: boolean;
     instructors: boolean;
-  }
+  };
 }
 
 export interface SearchFilters {

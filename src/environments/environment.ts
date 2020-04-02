@@ -6,6 +6,7 @@ export const environment = {
   production: false,
   // apiUrl: 'http://classplan.ou.test/',
   apiUrl: window.location.href,
+  defaultEventColor: '#3f51b5',
 };
 
 /*

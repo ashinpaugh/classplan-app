@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import {AbstractLoggable} from '../../classes/abstract-loggable';
 import {SectionService} from '../section/section.service';
-import {SectionObject} from '../section/section.interfaces';
+import {SectionMeetingType, SectionObject} from '../section/section.interfaces';
 import {Dictionary} from '../../interfaces/dictionary';
 import {CalendarColorMatrix, SearchFilters} from '../../components/search/helper/filter.helper';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
+import {environment} from '../../../environments/environment';
 
 // @see https://fullcalendar.io/docs/event-object
 export interface EventObject {
@@ -15,7 +16,7 @@ export interface EventObject {
   allDay: boolean;
   extendedProps: Dictionary<any> & {
     section: SectionObject;
-  }
+  };
 
   // Recurring events with specific times.
   startRecur?: string;
@@ -30,15 +31,13 @@ export interface EventObject {
   backgroundColor?: string;
   borderColor?: string;
   textColor?: string;
-  eventOrder?: string | string[] | Function;
+  eventOrder?: string | string[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class FullCalendarService extends AbstractLoggable {
-
-  protected defaultEventColor = '#3f51b5';
 
   constructor(
     protected sections: SectionService,
@@ -58,8 +57,10 @@ export class FullCalendarService extends AbstractLoggable {
     return this.sections.fetchAll(params)
       .pipe(
         map(sections => {
+          const showAllDay = filters.uiFilters.showAllDay;
+
           return sections
-            .filter(section => params.showOnline || (!params.showOnline && !this.isOnline(section)))
+            .filter(section => showAllDay || !(!showAllDay && this.isAllDay(section)))
             .map(section => this.formatSourceToEvent(colors, section))
           ;
         }),
@@ -115,7 +116,7 @@ export class FullCalendarService extends AbstractLoggable {
    * @param section
    * @param defaultColor
    */
-  getColor(matrix: CalendarColorMatrix, section, defaultColor = this.defaultEventColor): string {
+  getColor(matrix: CalendarColorMatrix, section: SectionObject, defaultColor = environment.defaultEventColor): string {
     const fieldSpecificity = ['instructor', 'room', 'building', 'subject', 'block'];
     const mostSpecific     = fieldSpecificity.find(field => field in matrix);
 
@@ -142,7 +143,7 @@ export class FullCalendarService extends AbstractLoggable {
       allDay : isAllDay,
       daysOfWeek: this.getDays(section, isAllDay),
       extendedProps: {
-        section: section,
+        section,
       },
       backgroundColor: this.getColor(colors, section),
     } as EventObject;
@@ -203,10 +204,6 @@ export class FullCalendarService extends AbstractLoggable {
     return target.substr(0, 2) + ':' + target.substr(2);
   }
 
-  protected isOnline(section: SectionObject): boolean {
-    return section.building && 'WEB' === section.building.name;
-  }
-
   /**
    * Determine if the section is considered an all day event.
    *
@@ -214,7 +211,18 @@ export class FullCalendarService extends AbstractLoggable {
    * @param includeOnline
    */
   protected isAllDay(section: SectionObject, includeOnline: boolean = true): boolean {
-    return includeOnline && this.isOnline(section) || !section.days && section.start_time === section.end_time;
+    return includeOnline && this.isOnline(section)
+      || !section.days && section.start_time === section.end_time
+    ;
+  }
+
+  /**
+   * Checks if a class is taught online.
+   *
+   * @param section
+   */
+  protected isOnline(section: SectionObject): boolean {
+    return section.building && 'WEB' === section.building.name || section.meeting_type === SectionMeetingType.Web;
   }
 
   protected meetingTypeToStr(typeId: number): string {
