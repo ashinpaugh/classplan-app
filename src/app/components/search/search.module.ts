@@ -13,6 +13,7 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatListModule} from '@angular/material/list';
 import {ColorGithubModule} from 'ngx-color/github';
 import {MatSelectModule} from '@angular/material/select';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 
 @NgModule({
@@ -31,6 +32,7 @@ import {MatSelectModule} from '@angular/material/select';
     MatCheckboxModule,
     MatListModule,
     MatSelectModule,
+    MatProgressSpinnerModule,
     NgSelectModule,
     ColorGithubModule,
   ],

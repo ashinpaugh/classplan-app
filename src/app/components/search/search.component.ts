@@ -1,7 +1,6 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren, ViewEncapsulation} from '@angular/core';
 import {MatDialogRef} from '@angular/material/dialog';
 import {MatCheckbox, MatCheckboxChange} from '@angular/material/checkbox';
-import {MatExpansionPanel} from '@angular/material/expansion';
 import {MatSelectionListChange} from '@angular/material/list';
 import {NgOption, NgSelectComponent} from '@ng-select/ng-select';
 import {GithubComponent} from 'ngx-color/github';
@@ -18,7 +17,7 @@ import {SectionService} from '../../services/section/section.service';
 import {DomUtil} from '../../classes/tools/dom.util';
 import {FilterHelper, SearchFilters, UIFilters} from './helper/filter.helper';
 import {combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
-import {debounceTime, distinctUntilChanged, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {debounceTime, distinctUntilChanged, filter, map, mapTo, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
 
 @Component({
@@ -49,9 +48,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   buildings$: Observable<BasicObject[]>;
   subjects$: Observable<BasicObject[]>;
   instructors$: Observable<BasicObject[]>;
+  showMetaLoader$: Observable<boolean>;
 
   constructor(
-    // @Inject(MAT_DIALOG_DATA) public data: SearchFilters,
     protected elementRef: ElementRef,
     protected dialogRef: MatDialogRef<SearchComponent>,
     protected terms: TermService,
@@ -178,7 +177,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
           return this.subjects.fetchByInstructor(blocks, instructors);
         }),
         tap((data) => this.log('subjects', data)),
-        share(),
+        shareReplay(1),
       )
     ;
 
@@ -209,7 +208,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
           );
         }),
         tap(instructors => this.log('instructors$', instructors)),
-        share(),
+        shareReplay(1),
       )
     ;
 
@@ -225,6 +224,28 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
           return this.buildings.fetchAll();
         }),
         tap(buildings => this.log('buildings -> list', buildings)),
+        shareReplay(1),
+      )
+    ;
+
+    this.showMetaLoader$ = combineLatest([
+      this.blocks$.pipe(startWith(undefined)),
+      this.subjects$.pipe(startWith(undefined)),
+      this.instructors$.pipe(startWith(undefined)),
+      this.buildings$.pipe(startWith(undefined)),
+    ])
+      .pipe(
+        // debounceTime(125),
+        tap(showMetaLoader => this.debug('showMetaLoader$ -> peak', showMetaLoader)),
+        map(results => {
+          if (!results[0] || !results[0].length) {
+            return false;
+          }
+
+          return !results.every(items => items && items.length > 0);
+        }),
+        startWith(false),
+        tap(showMetaLoader => this.log('showMetaLoader$', showMetaLoader)),
         shareReplay(1),
       )
     ;
