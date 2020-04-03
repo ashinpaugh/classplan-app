@@ -32,14 +32,14 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   @Output() filtersChange: EventEmitter<SearchFilters> = new EventEmitter<SearchFilters>();
 
   @ViewChildren(NgSelectComponent) ngSelects: QueryList<NgSelectComponent>;
-  @ViewChild('refTermSearch', { static: false }) refTerm: NgSelectComponent;
-  @ViewChild('refBlockSearch', { static: false }) refBlock: NgSelectComponent;
-  @ViewChild('refBuildingSearch', { static: false }) refBuilding: NgSelectComponent;
-  @ViewChild('refSubjectSearch', { static: false }) refSubject: NgSelectComponent;
-  @ViewChild('refInstructorSearch', { static: false }) refInstructor: NgSelectComponent;
+  @ViewChild('refTermSearch') refTerm: NgSelectComponent;
+  @ViewChild('refBlockSearch') refBlock: NgSelectComponent;
+  @ViewChild('refBuildingSearch') refBuilding: NgSelectComponent;
+  @ViewChild('refSubjectSearch') refSubject: NgSelectComponent;
+  @ViewChild('refInstructorSearch') refInstructor: NgSelectComponent;
   @ViewChild('colorPallet', { static: true, read: ElementRef }) refColor: ElementRef;
-  @ViewChild('chkFilterSubjectsByInstructors', { static: false }) refChkSubjectsByInstructors: MatCheckbox;
-  @ViewChild('chkFilterInstructorsBySubjects', { static: false }) refChkInstructorsBySubject: MatCheckbox;
+  @ViewChild('chkFilterSubjectsByInstructors') refChkSubjectsByInstructors: MatCheckbox;
+  @ViewChild('chkFilterInstructorsBySubjects') refChkInstructorsBySubject: MatCheckbox;
 
   availableMeetingTypes: string[];
   disableSearch$: Observable<boolean>;
