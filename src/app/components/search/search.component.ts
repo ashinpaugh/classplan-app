@@ -197,7 +197,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     tippy(event.target as HTMLElement, {
       allowHTML: true,
       content: this.refColor.nativeElement,
-      trigger: "click",
+      trigger: 'click',
       showOnCreate: true,
       delay: [null, 5000],
       appendTo: this.elementRef.nativeElement,
@@ -382,15 +382,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       .findByLabel(this.Filters.term.name)
     ;
 
-    if (!termOption) {
+    if (!termOption || !this.Filters.blocks || !this.Filters.blocks.length) {
       return;
     }
-
-    this.showAllDay = this.Filters.uiFilters.showAllDay;
-    this.meetingTypes = this.Filters.uiFilters.meetingTypes;
-
-    this.refChkSubjectsByInstructors.checked = this.Filters.uiFilters.xref.subjects;
-    this.refChkInstructorsBySubject.checked  = this.Filters.uiFilters.xref.instructors;
 
     this.refTerm.select(termOption);
 
@@ -418,11 +412,23 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       ;
     };
 
+    this.refBlock.changeEvent
+      .pipe(take(1))
+      .subscribe(() => {
+        syncFilterWithSelect(this.refSubject, this.subjects$, this.Filters.subjects);
+        syncFilterWithSelect(this.refInstructor, this.instructors$, this.Filters.instructors);
+        syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.buildings, true);
+        syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.rooms, true);
+      })
+    ;
+
     syncFilterWithSelect(this.refBlock, this.blocks$, this.Filters.blocks);
-    syncFilterWithSelect(this.refSubject, this.subjects$, this.Filters.subjects);
-    syncFilterWithSelect(this.refInstructor, this.instructors$, this.Filters.instructors);
-    syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.buildings, true);
-    syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.rooms, true);
+
+    this.showAllDay = this.Filters.uiFilters.showAllDay;
+    this.meetingTypes = this.Filters.uiFilters.meetingTypes;
+
+    this.refChkSubjectsByInstructors.checked = this.Filters.uiFilters.xref.subjects;
+    this.refChkInstructorsBySubject.checked  = this.Filters.uiFilters.xref.instructors;
   }
 
   /**
