@@ -15,7 +15,9 @@ import {TooltipHostDirective} from '../../directives/tooltip-host/tooltip-host.d
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 
-interface ViewOptions { [viewId: string]: ViewOptionsInput }
+interface ViewOptions {
+  [viewId: string]: ViewOptionsInput;
+}
 
 @Component({
   selector: 'classplan-calendar',
@@ -70,6 +72,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           if (!filters || !filters.blocks || !filters.blocks.length) {
             return of([]);
           }
+
+          this.refFullCalendar.getApi().removeAllEvents();
 
           return this.fullcalendar.fetchAll(filters, filters.uiFilters.colors);
         }),
