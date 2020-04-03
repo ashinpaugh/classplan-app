@@ -17,7 +17,7 @@ import {SectionService} from '../../services/section/section.service';
 import {DomUtil} from '../../classes/tools/dom.util';
 import {FilterHelper, SearchFilters, UIFilters} from './helper/filter.helper';
 import {combineLatest, merge, Observable, of, Subject, timer} from 'rxjs';
-import {debounceTime, distinctUntilChanged, filter, map, mapTo, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
+import {debounceTime, filter, map, mapTo, shareReplay, startWith, switchMap, take, takeUntil, tap} from 'rxjs/operators';
 import tippy from 'tippy.js';
 
 @Component({
@@ -48,7 +48,8 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   buildings$: Observable<BasicObject[]>;
   subjects$: Observable<BasicObject[]>;
   instructors$: Observable<BasicObject[]>;
-  showMetaLoader$: Observable<boolean>;
+  showSpinner$: Observable<boolean>;
+  hideElements$: Observable<boolean>;
 
   constructor(
     protected elementRef: ElementRef,
@@ -98,6 +99,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     this.setUIFilter('meetingTypes', type);
   }
 
+  /**
+   * @inheritDoc
+   */
   ngAfterViewInit(): void {
 
     this.disableSearch$ = combineLatest([
@@ -120,135 +124,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
     ;
 
-    this.terms$ = this.terms.fetchAll()
-      .pipe(
-        map(data => data.terms),
-        shareReplay(1),
-      )
-    ;
+    this.setupEntityFetchers();
 
-    // this.blocks$ = this.ngOnChange<TermObject>(this.refTerm)
-    this.blocks$ = this.onTermChange()
-      .pipe(
-        debounceTime(25),
-        tap((term: TermObject) => this.log('blocks$ -> peak', term)),
-        map((term: TermObject) => term && term.blocks),
-        tap(blocks => {
-          this.log('blocks$', blocks);
-
-          this.ngSelectClear(this.refBlock);
-
-          if (!blocks || !blocks.length) {
-            return;
-          }
-
-          // Hide the blinking cursor in the semester label.
-          this.refTerm.blur();
-        }),
-        shareReplay(1),
-      )
-    ;
-
-    this.subjects$ = combineLatest([
-      this.onTermChange(true),
-      this.ngOnChange(this.refInstructor).pipe(startWith(undefined)),
-      this.refChkSubjectsByInstructors.change.pipe(
-        startWith({
-          source: this.refChkSubjectsByInstructors,
-          checked: this.refChkSubjectsByInstructors.checked,
-        }),
-      ),
-    ])
-      .pipe(
-        tap(value => this.log('subjects -> peak', value)),
-        switchMap((results: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
-          const [blocks, instructors, filterByInstructors] = results;
-
-          if (!blocks || !blocks.length) {
-            this.ngSelectClear(this.refSubject);
-
-            return of(undefined);
-          }
-
-          if (!instructors || !instructors.length || !filterByInstructors.checked) {
-            return this.subjects.fetchAllByBlock(blocks);
-          }
-
-          return this.subjects.fetchByInstructor(blocks, instructors);
-        }),
-        tap((data) => this.log('subjects', data)),
-        shareReplay(1),
-      )
-    ;
-
-    this.instructors$ = combineLatest([
-      this.onTermChange(true),
-      this.ngOnChange(this.refSubject).pipe(startWith(undefined)),
-      this.refChkInstructorsBySubject.change.pipe(
-        startWith({
-          source: this.refChkInstructorsBySubject,
-          checked: this.refChkInstructorsBySubject.checked,
-        }),
-      ),
-    ])
-      .pipe(
-        tap(results => this.log('instructors$ -> peak', results)),
-        switchMap((data: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
-          const [blocks, subjects, filterBySubjects] = data;
-
-          if (!blocks || !blocks.length) {
-            this.ngSelectClear(this.refInstructor);
-
-            return of(undefined);
-          }
-
-          return this.instructors.fetchAllByBlock(
-            blocks,
-            !filterBySubjects.checked ? undefined : subjects
-          );
-        }),
-        tap(instructors => this.log('instructors$', instructors)),
-        shareReplay(1),
-      )
-    ;
-
-    this.buildings$ = this.refBlock.changeEvent
-      .pipe(
-        distinctUntilChanged(),
-        tap(blocks => this.log('building -> peak', blocks)),
-        switchMap((blocks: BasicObject[]) => {
-          if (!blocks || !blocks.length) {
-            return of(undefined);
-          }
-
-          return this.buildings.fetchAll();
-        }),
-        tap(buildings => this.log('buildings -> list', buildings)),
-        shareReplay(1),
-      )
-    ;
-
-    this.showMetaLoader$ = combineLatest([
-      this.blocks$.pipe(startWith(undefined)),
-      this.subjects$.pipe(startWith(undefined)),
-      this.instructors$.pipe(startWith(undefined)),
-      this.buildings$.pipe(startWith(undefined)),
-    ])
-      .pipe(
-        // debounceTime(125),
-        tap(showMetaLoader => this.debug('showMetaLoader$ -> peak', showMetaLoader)),
-        map(results => {
-          if (!results[0] || !results[0].length) {
-            return false;
-          }
-
-          return !results.every(items => items && items.length > 0);
-        }),
-        startWith(false),
-        tap(showMetaLoader => this.log('showMetaLoader$', showMetaLoader)),
-        shareReplay(1),
-      )
-    ;
+    this.setupLoadingSpinner();
 
     DomUtil.watch$(this.elementRef.nativeElement, {childList: true, subtree: true})
       .pipe(takeUntil(this.ngUnsubscribe$))
@@ -380,12 +258,125 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     this.dialogRef.close();
   }
 
+  /**
+   * Make api calls based on user interaction with the search filters.
+   */
+  protected setupEntityFetchers(): void {
+
+    this.terms$ = this.terms.fetchAll()
+      .pipe(
+        map(data => data.terms),
+        startWith([]),
+        shareReplay(1),
+      )
+    ;
+
+    // this.blocks$ = this.ngOnChange<TermObject>(this.refTerm)
+    this.blocks$ = this.onTermChange()
+      .pipe(
+        debounceTime(25),
+        tap((term: TermObject) => this.log('blocks$ -> peak', term)),
+        map((term: TermObject) => term && term.blocks),
+        tap(blocks => {
+          this.log('blocks$', blocks);
+
+          this.ngSelectClear(this.refBlock);
+
+          if (!blocks || !blocks.length) {
+            return;
+          }
+
+          // Hide the blinking cursor in the semester label.
+          this.refTerm.blur();
+        }),
+        shareReplay(1),
+      )
+    ;
+
+    this.subjects$ = combineLatest([
+      this.onTermChange(true),
+      this.ngOnChange(this.refInstructor).pipe(startWith(undefined)),
+      this.refChkSubjectsByInstructors.change.pipe(
+        startWith({
+          source: this.refChkSubjectsByInstructors,
+          checked: this.refChkSubjectsByInstructors.checked,
+        }),
+      ),
+    ])
+      .pipe(
+        tap(value => this.log('subjects -> peak', value)),
+        switchMap((results: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
+          const [blocks, instructors, filterByInstructors] = results;
+
+          if (!blocks || !blocks.length) {
+            this.ngSelectClear(this.refSubject);
+
+            return of(undefined);
+          }
+
+          if (!instructors || !instructors.length || !filterByInstructors.checked) {
+            return this.subjects.fetchAllByBlock(blocks);
+          }
+
+          return this.subjects.fetchByInstructor(blocks, instructors);
+        }),
+        tap((data) => this.log('subjects', data)),
+        shareReplay(1),
+      )
+    ;
+
+    this.instructors$ = combineLatest([
+      this.onTermChange(true),
+      this.ngOnChange(this.refSubject).pipe(startWith(undefined)),
+      this.refChkInstructorsBySubject.change.pipe(
+        startWith({
+          source: this.refChkInstructorsBySubject,
+          checked: this.refChkInstructorsBySubject.checked,
+        }),
+      ),
+    ])
+      .pipe(
+        tap(results => this.log('instructors$ -> peak', results)),
+        switchMap((data: [BlockObject[], BasicObject[], MatCheckboxChange]) => {
+          const [blocks, subjects, filterBySubjects] = data;
+
+          if (!blocks || !blocks.length) {
+            this.ngSelectClear(this.refInstructor);
+
+            return of(undefined);
+          }
+
+          return this.instructors.fetchAllByBlock(
+            blocks,
+            !filterBySubjects.checked ? undefined : subjects
+          );
+        }),
+        tap(instructors => this.log('instructors$', instructors)),
+        shareReplay(1),
+      )
+    ;
+
+    this.buildings$ = this.buildings.fetchAll()
+      .pipe(shareReplay(1))
+    ;
+
+  }
+
+  /**
+   * uiFilter setter.
+   *
+   * @param param
+   * @param value
+   */
   protected setUIFilter(param: keyof UIFilters, value) {
     const filters = this.Filters;
     filters.uiFilters[param] = value;
     this.Filters = filters;
   }
 
+  /**
+   * Take the settings stored in the filter helper and reapply them to the modal.
+   */
   protected syncFilters() {
     const termOption = this.refTerm.itemsList
       .findByLabel(this.Filters.term.name)
@@ -432,6 +423,41 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     syncFilterWithSelect(this.refInstructor, this.instructors$, this.Filters.instructors);
     syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.buildings, true);
     syncFilterWithSelect(this.refBuilding, this.buildings$, this.Filters.rooms, true);
+  }
+
+  /**
+   * Setup a spinner so that the uiElements don't load in staggered.
+   */
+  protected setupLoadingSpinner(): void {
+    const fieldCheck = (items) => items && items.length > 0;
+    const haveValues = (items) => items && items.every(fieldCheck);
+
+    this.hideElements$ = combineLatest([
+      this.refBlock.changeEvent,
+      this.subjects$,
+      this.instructors$,
+      this.buildings$,
+    ])
+      .pipe(
+        // tap(hideElements => this.debug('hideElements$ -> peak', hideElements)),
+        map(results => !haveValues(results)),
+        startWith(true),
+        tap(hideElements => this.log('hideElements$', hideElements)),
+        shareReplay(1),
+      )
+    ;
+
+    this.showSpinner$ = combineLatest([
+      this.hideElements$,
+      this.refBlock.changeEvent.pipe(map(value => fieldCheck(value))),
+    ])
+      .pipe(
+        map(flags => flags && flags.every(flag => !!flag)),
+        startWith(false),
+        tap(showSpinner => this.log('showSpinner$', showSpinner)),
+        shareReplay(1),
+      )
+    ;
   }
 
   /**

@@ -25,8 +25,20 @@ classplan-search {
       }
     }
 
-    mat-progress-spinner {
+    #spinner-wrapper {
       margin: 32px auto;
+      max-height: 56px;
+      max-width: 56px;
+
+      mat-progress-spinner {
+        max-height: inherit;
+        max-width: inherit;
+
+        svg {
+          max-height: inherit;
+          max-width: inherit;
+        }
+      }
     }
 
     mat-card-content {
@@ -129,6 +141,10 @@ classplan-search {
         mat-form-field, mat-selection-list {
           width: 100%;
           padding: 0 16px;
+        }
+
+        mat-list-option div {
+          padding: 0;
         }
       }
     }

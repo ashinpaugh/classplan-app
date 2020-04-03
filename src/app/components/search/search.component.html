@@ -1,3 +1,4 @@
+<link rel="prefetch" href="app/assets/images/color-wheel.png" />
 
 <mat-card>
   <mat-card-header>
@@ -24,7 +25,7 @@
 
 
 <ng-template #tplFields>
-  <mat-list>
+  <mat-list [hidden]="(terms$ | async)?.length == 0">
 
     <mat-list-item id="semester-container">
 
@@ -38,6 +39,7 @@
         [clearable]="true"
         [items]="terms$ | async"
         [markFirst]="true"
+        (clear)="refBlock.clearModel()"
       ></ng-select>
     </mat-list-item>
 
@@ -58,12 +60,7 @@
         [items]="blocks$ | async"
       >
         <ng-template ng-header-tmp>
-          <input
-            placeholder="Search..."
-            type="text"
-            class="ng-select-search"
-            (input)="refBlockSearch.filter($event.target.value)"
-          />
+          <ng-container *ngTemplateOutlet="tplNgSearch; context: {ngSelect: refBlockSearch}"></ng-container>
         </ng-template>
 
         <ng-template ng-label-tmp let-item="item">
@@ -93,223 +90,211 @@
 
     </mat-list-item>
 
-    <mat-list-item
-      id="subject-container"
-      class="has-checkbox"
-      [hidden]="undefined == (subjects$ | async)"
-    >
-      <div matLine id="subject-first-row" class="row">
-
-        <ng-select
-          #refSubjectSearch
-          appendTo="#subject-first-row"
-          placeholder="Chose a Subject"
-          groupBy="meta"
-          bindValue="id"
-          bindLabel="name"
-          [searchable]="false"
-          [virtualScroll]="true"
-          [multiple]="true"
-          [clearable]="true"
-          [items]="subjects$ | async"
-        >
-          <ng-template ng-header-tmp>
-            <input
-              placeholder="Search..."
-              type="text"
-              class="ng-select-search"
-              (input)="refSubjectSearch.filter($event.target.value);"
-            />
-          </ng-template>
-
-          <ng-template ng-label-tmp let-item="item">
-            <span
-              aria-hidden="true"
-              class="ng-value-icon left ng-star-inserted"
-              (click)="ngSelectDeselectItem(refSubjectSearch, 'subject', item)"
-            >×</span>
-
-            <span
-              id="subject-{{item.id}}"
-              class="ng-select-label"
-            >
-              {{item.name}}
-            </span>
-
-            <span
-              aria-hidden="true"
-              class="ng-value-icon right ng-star-inserted"
-              (mousedown)="ngOptionLabelClick($event, 'subject', item, colorPallet)"
-            >
-              <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
-            </span>
-          </ng-template>
-
-        </ng-select>
-      </div>
-
-      <div
-        matLine
-        class="row checkbox"
-        [hidden]="refInstructorSearch.selectedValues?.length == 0"
-      >
-        <mat-checkbox
-          #chkFilterSubjectsByInstructors
-          labelPosition="before"
-          color="primary"
-          [checked]="(Filter$ | async)?.uiFilters?.xref?.subjects"
-        >
-          Filter by selected instructors
-        </mat-checkbox>
-      </div>
-    </mat-list-item>
-
-    <mat-list-item
-      id="instructor-container"
-      class="has-checkbox"
-      [hidden]="undefined == (instructors$ | async)"
-    >
-      <div matLine id="instructor-first-row" class="row">
-
-        <ng-select
-          #refInstructorSearch
-          appendTo="#instructor-first-row"
-          placeholder="Chose a Instructor"
-          groupBy="meta"
-          bindValue="id"
-          bindLabel="name"
-          dropdownPosition="auto"
-          [searchable]="false"
-          [virtualScroll]="true"
-          [multiple]="true"
-          [clearable]="true"
-          [items]="instructors$ | async"
-        >
-
-          <ng-template ng-header-tmp>
-            <input
-              placeholder="Search..."
-              type="text"
-              class="ng-select-search"
-              (input)="refInstructorSearch.filter($event.target.value)"
-            />
-          </ng-template>
-
-          <ng-template ng-label-tmp let-item="item">
-            <span
-              aria-hidden="true"
-              class="ng-value-icon left ng-star-inserted"
-              (click)="ngSelectDeselectItem(refInstructorSearch, 'instructor', item)"
-            >×</span>
-
-            <span
-              id="instructor-{{item.id}}"
-              class="ng-select-label"
-            >
-              {{item.name}}
-            </span>
-
-            <span
-              aria-hidden="true"
-              class="ng-value-icon right ng-star-inserted"
-              (mousedown)="ngOptionLabelClick($event, 'instructor', item, colorPallet)"
-            >
-              <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
-            </span>
-          </ng-template>
-
-        </ng-select>
-      </div>
-
-      <div
-        matLine
-        class="row checkbox"
-        [hidden]="refSubjectSearch.selectedValues?.length == 0"
-      >
-        <mat-checkbox
-          #chkFilterInstructorsBySubjects
-          labelPosition="before"
-          color="primary"
-          [checked]="(Filter$ | async)?.uiFilters?.xref?.instructors"
-        >
-          Filter by selected subjects
-        </mat-checkbox>
-      </div>
-    </mat-list-item>
-
-    <mat-list-item
-      id="building-container"
-      class="has-checkbox"
-      [hidden]="undefined == (buildings$ | async)"
-    >
-      <div matLine id="building-first-row" class="row">
-
-        <ng-select
-          #refBuildingSearch
-          appendTo="#building-first-row"
-          placeholder="Chose a Building"
-          groupBy="rooms"
-          bindValue="id"
-          bindLabel="name"
-          [selectableGroup]="true"
-          [searchable]="false"
-          [virtualScroll]="true"
-          [multiple]="true"
-          [clearable]="true"
-          [items]="buildings$ | async"
-        >
-          <ng-template ng-header-tmp>
-            <input
-              placeholder="Search..."
-              type="text"
-              class="ng-select-search"
-              (input)="refBuildingSearch.filter($event.target.value);"
-            />
-          </ng-template>
-
-          <ng-template ng-optgroup-tmp let-item="item">
-            {{item.name}}
-          </ng-template>
-
-          <ng-template ng-label-tmp let-item="item">
-            <span
-              aria-hidden="true"
-              class="ng-value-icon left ng-star-inserted"
-              (click)="ngSelectDeselectItem(refBuildingSearch, item.rooms ? 'building' : 'room', item)"
-            >×</span>
-
-            <span
-              id="{{item?.rooms ? 'building' : 'room'}}-{{item.id}}"
-              class="ng-select-label"
-            >
-              {{item.name}}
-            </span>
-
-            <span
-              aria-hidden="true"
-              class="ng-value-icon right ng-star-inserted"
-              (mousedown)="ngOptionLabelClick($event, item.rooms ? 'building' : 'room', item, colorPallet)"
-            >
-              <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
-            </span>
-          </ng-template>
-
-        </ng-select>
-      </div>
-    </mat-list-item>
+    <ng-container *ngTemplateOutlet="tplDependantFields"></ng-container>
 
   </mat-list>
 
-  <ng-container *ngTemplateOutlet="tplOtherFields; context: {
-    hidden: !(buildings$ | async)?.length
-  }"></ng-container>
+  <ng-container *ngTemplateOutlet="tplAdditionalFields"></ng-container>
+
+  <ng-container *ngTemplateOutlet="tplSpinner"></ng-container>
+
 </ng-template>
 
 
+<ng-template #tplDependantFields>
+  <mat-list-item
+    id="subject-container"
+    class="has-checkbox"
+    [hidden]="(hideElements$ | async) || undefined == (subjects$ | async)"
+  >
+    <div matLine id="subject-first-row" class="row">
 
-<ng-template #tplOtherFields let-hidden="hidden">
+      <ng-select
+        #refSubjectSearch
+        appendTo="#subject-first-row"
+        placeholder="Chose a Subject"
+        groupBy="meta"
+        bindValue="id"
+        bindLabel="name"
+        [searchable]="false"
+        [virtualScroll]="true"
+        [multiple]="true"
+        [clearable]="true"
+        [items]="subjects$ | async"
+      >
+        <ng-template ng-header-tmp>
+          <ng-container *ngTemplateOutlet="tplNgSearch; context: {ngSelect: refSubjectSearch}"></ng-container>
+        </ng-template>
 
-  <div id="other-fields" [hidden]="hidden">
+        <ng-template ng-label-tmp let-item="item">
+          <span
+            aria-hidden="true"
+            class="ng-value-icon left ng-star-inserted"
+            (click)="ngSelectDeselectItem(refSubjectSearch, 'subject', item)"
+          >×</span>
+
+          <span
+            id="subject-{{item.id}}"
+            class="ng-select-label"
+          >
+            {{item.name}}
+          </span>
+
+          <span
+            aria-hidden="true"
+            class="ng-value-icon right ng-star-inserted"
+            (mousedown)="ngOptionLabelClick($event, 'subject', item, colorPallet)"
+          >
+            <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
+          </span>
+        </ng-template>
+
+      </ng-select>
+    </div>
+
+    <div
+      matLine
+      class="row checkbox"
+      [hidden]="refInstructorSearch.selectedValues?.length == 0"
+    >
+      <mat-checkbox
+        #chkFilterSubjectsByInstructors
+        labelPosition="before"
+        color="primary"
+        [checked]="(Filter$ | async)?.uiFilters?.xref?.subjects"
+      >
+        Filter by selected instructors
+      </mat-checkbox>
+    </div>
+  </mat-list-item>
+
+  <mat-list-item
+    id="instructor-container"
+    class="has-checkbox"
+    [hidden]="(hideElements$ | async) || undefined == (instructors$ | async)"
+  >
+    <div matLine id="instructor-first-row" class="row">
+
+      <ng-select
+        #refInstructorSearch
+        appendTo="#instructor-first-row"
+        placeholder="Chose a Instructor"
+        groupBy="meta"
+        bindValue="id"
+        bindLabel="name"
+        dropdownPosition="auto"
+        [searchable]="false"
+        [virtualScroll]="true"
+        [multiple]="true"
+        [clearable]="true"
+        [items]="instructors$ | async"
+      >
+        <ng-template ng-header-tmp>
+          <ng-container *ngTemplateOutlet="tplNgSearch; context: {ngSelect: refInstructorSearch}"></ng-container>
+        </ng-template>
+
+        <ng-template ng-label-tmp let-item="item">
+          <span
+            aria-hidden="true"
+            class="ng-value-icon left ng-star-inserted"
+            (click)="ngSelectDeselectItem(refInstructorSearch, 'instructor', item)"
+          >×</span>
+
+          <span
+            id="instructor-{{item.id}}"
+            class="ng-select-label"
+          >
+            {{item.name}}
+          </span>
+
+          <span
+            aria-hidden="true"
+            class="ng-value-icon right ng-star-inserted"
+            (mousedown)="ngOptionLabelClick($event, 'instructor', item, colorPallet)"
+          >
+            <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
+          </span>
+        </ng-template>
+
+      </ng-select>
+    </div>
+
+    <div
+      matLine
+      class="row checkbox"
+      [hidden]="refSubjectSearch.selectedValues?.length == 0"
+    >
+      <mat-checkbox
+        #chkFilterInstructorsBySubjects
+        labelPosition="before"
+        color="primary"
+        [checked]="(Filter$ | async)?.uiFilters?.xref?.instructors"
+      >
+        Filter by selected subjects
+      </mat-checkbox>
+    </div>
+  </mat-list-item>
+
+  <mat-list-item
+    id="building-container"
+    class="has-checkbox"
+    [hidden]="(hideElements$ | async) || undefined == (buildings$ | async)"
+  >
+    <div matLine id="building-first-row" class="row">
+
+      <ng-select
+        #refBuildingSearch
+        appendTo="#building-first-row"
+        placeholder="Chose a Building"
+        groupBy="rooms"
+        bindValue="id"
+        bindLabel="name"
+        [selectableGroup]="true"
+        [searchable]="false"
+        [virtualScroll]="true"
+        [multiple]="true"
+        [clearable]="true"
+        [items]="buildings$ | async"
+      >
+        <ng-template ng-header-tmp>
+          <ng-container *ngTemplateOutlet="tplNgSearch; context: {ngSelect: refBuildingSearch}"></ng-container>
+        </ng-template>
+
+        <ng-template ng-optgroup-tmp let-item="item">
+          {{item.name}}
+        </ng-template>
+
+        <ng-template ng-label-tmp let-item="item">
+          <span
+            aria-hidden="true"
+            class="ng-value-icon left ng-star-inserted"
+            (click)="ngSelectDeselectItem(refBuildingSearch, item.rooms ? 'building' : 'room', item)"
+          >×</span>
+
+          <span
+            id="{{item?.rooms ? 'building' : 'room'}}-{{item.id}}"
+            class="ng-select-label"
+          >
+            {{item.name}}
+          </span>
+
+          <span
+            aria-hidden="true"
+            class="ng-value-icon right ng-star-inserted"
+            (mousedown)="ngOptionLabelClick($event, item.rooms ? 'building' : 'room', item, colorPallet)"
+          >
+            <img class="color-picker" alt="Color Picker" src="app/assets/images/color-wheel.png" />
+          </span>
+        </ng-template>
+
+      </ng-select>
+    </div>
+  </mat-list-item>
+</ng-template>
+
+<ng-template #tplAdditionalFields>
+
+  <div id="other-fields" [hidden]="hideElements$ | async">
     <mat-form-field id="meeting-type">
       <mat-label>Meeting Types</mat-label>
 
@@ -328,12 +313,22 @@
         [selected]="(Filter$ | async).uiFilters.showAllDay"
         [(ngModel)]="showAllDay"
       >
-        Show unassigned time block:
+        Show unassigned time:
       </mat-list-option>
 
     </mat-selection-list>
   </div>
 
+</ng-template>
+
+
+<ng-template #tplNgSearch let-ngSelect="ngSelect">
+  <input
+    placeholder="Search..."
+    type="text"
+    class="ng-select-search"
+    (input)="ngSelect.filter($event.target.value)"
+  />
 </ng-template>
 
 
@@ -356,4 +351,16 @@
   >
     Search
   </button>
+</ng-template>
+
+
+<ng-template #tplSpinner>
+
+  <div id="spinner-wrapper" *ngIf="(showSpinner$ | async) || (terms$ | async)?.length === 0">
+    <mat-progress-spinner
+      color="accent"
+      mode="indeterminate"
+    ></mat-progress-spinner>
+  </div>
+
 </ng-template>
