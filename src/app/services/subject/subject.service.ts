@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
-import {merge, Observable} from 'rxjs';
 import {BlockObject} from '../term/term.interfaces';
 import {BasicObject} from '../../interfaces/dictionary';
-import {map, tap, toArray} from 'rxjs/operators';
 import {ArrayUtil} from '../../classes/tools/array.util';
+import {merge, Observable} from 'rxjs';
+import {map, tap, toArray} from 'rxjs/operators';
 
 export interface BlockAwareSubjectList {
   block: BlockObject;
@@ -17,9 +17,7 @@ export interface BlockAwareSubjectList {
 })
 export class SubjectService extends AbstractService {
 
-  constructor(
-
-  ) {
+  constructor() {
     super();
   }
 

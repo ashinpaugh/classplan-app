@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
-import {merge, Observable} from 'rxjs';
-import {map, scan, tap} from 'rxjs/operators';
 import {BasicObject} from '../../interfaces/dictionary';
 import {RoomObject} from '../room/room.service';
+import {Observable} from 'rxjs';
+import {map, tap} from 'rxjs/operators';
 
 export interface BuildingObject {
   campus?: BasicObject;

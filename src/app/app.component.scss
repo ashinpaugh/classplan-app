@@ -11,11 +11,15 @@ classplan-root {
       text-align: center;
     }
 
-    img {
+    #logo-container {
       padding-right: 16px;
-      height: 100%;
-      width: auto;
       float: right;
+      height: 100%;
+
+      img {
+        height: 100%;
+        width: auto;
+      }
     }
   }
 

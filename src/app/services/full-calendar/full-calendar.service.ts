@@ -225,15 +225,14 @@ export class FullCalendarService extends AbstractLoggable {
     return section.building && 'WEB' === section.building.name || section.meeting_type === SectionMeetingType.Web;
   }
 
-  protected meetingTypeToStr(typeId: number): string {
-    switch (typeId) {
-      case 0: return 'Exam';
-      case 1: return 'Class';
-      case 2: return 'Web';
-      case 3: return 'Lab';
-      case 4: return 'Conference';
-      default: return 'Unknown';
-    }
-  }
-
+  // protected meetingTypeToStr(typeId: number): string {
+  //   switch (typeId) {
+  //     case 0: return 'Exam';
+  //     case 1: return 'Class';
+  //     case 2: return 'Web';
+  //     case 3: return 'Lab';
+  //     case 4: return 'Conference';
+  //     default: return 'Unknown';
+  //   }
+  // }
 }

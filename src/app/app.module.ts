@@ -13,7 +13,7 @@ import {ComponentsModule} from './components/components.module';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
   ],
   imports: [
     BrowserModule,
@@ -29,7 +29,7 @@ import {ComponentsModule} from './components/components.module';
     ComponentsModule,
   ],
   bootstrap: [
-    AppComponent
+    AppComponent,
   ],
   entryComponents: [],
   providers: [],

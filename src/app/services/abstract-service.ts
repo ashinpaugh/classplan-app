@@ -11,12 +11,10 @@ export interface ApiParams {
 export abstract class AbstractService extends AbstractLoggable {
 
   // Poor mans caching.
-  protected apiTracker: Map<string, any>;
+  protected apiTracker: Map<string, any> = new Map<string, object>();
 
   constructor() {
     super();
-
-    this.apiTracker = new Map<string, object>();
   }
 
   /**
@@ -118,7 +116,7 @@ export abstract class AbstractService extends AbstractLoggable {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       }
     };
   }
