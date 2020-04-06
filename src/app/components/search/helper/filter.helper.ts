@@ -5,27 +5,27 @@ import {UISafeBuilding} from '../../../services/building/building.service';
 import {BlockObject, TermObject} from '../../../services/term/term.interfaces';
 import {BasicObject} from '../../../interfaces/dictionary';
 import {SearchComponent} from '../search.component';
-import * as SearchHelpers from './filter.interfaces';
+import * as HelperInterfaces from './filter.interfaces';
 export * from './filter.interfaces';
 
 
 export class FilterHelper {
 
-  static filters$: BehaviorSubject<SearchHelpers.SearchFilters>;
+  static filters$: BehaviorSubject<HelperInterfaces.SearchFilters>;
 
-  static set Filters(filters: SearchHelpers.SearchFilters) {
+  static set Filters(filters: HelperInterfaces.SearchFilters) {
     FilterHelper.filters$.next(filters);
   }
 
-  static get Filters(): SearchHelpers.SearchFilters {
+  static get Filters(): HelperInterfaces.SearchFilters {
     return FilterHelper.filters$.getValue();
   }
 
-  static get Filters$(): Observable<SearchHelpers.SearchFilters> {
+  static get Filters$(): Observable<HelperInterfaces.SearchFilters> {
     return FilterHelper.filters$.asObservable();
   }
 
-  static get DefaultFilters(): SearchHelpers.SearchFilters {
+  static get DefaultFilters(): HelperInterfaces.SearchFilters {
     return {
       term: undefined,
       blocks: undefined,
@@ -36,7 +36,7 @@ export class FilterHelper {
       uiFilters: {
         showAllDay: false,
         meetingTypes: [SectionMeetingType.Class],
-        colors: {} as SearchHelpers.CalendarColorMatrix,
+        colors: {} as HelperInterfaces.CalendarColorMatrix,
         xref: {
           subjects: false,
           instructors: true,
@@ -47,7 +47,7 @@ export class FilterHelper {
 
   static setup(reset?: boolean) {
     if (!FilterHelper.filters$) {
-      FilterHelper.filters$ = new BehaviorSubject<SearchHelpers.SearchFilters>(undefined);
+      FilterHelper.filters$ = new BehaviorSubject<HelperInterfaces.SearchFilters>(undefined);
     }
 
     if (reset) {
@@ -75,7 +75,7 @@ export class FilterHelper {
     this.Filters = filters;
   }
 
-  static syncComponentValues(component: SearchComponent): SearchHelpers.SearchFilters {
+  static syncComponentValues(component: SearchComponent): HelperInterfaces.SearchFilters {
     const ngBuildings = component.refBuilding.selectedValues as UISafeBuilding[];
     const buildings   = ngBuildings.filter((item: UISafeBuilding) => !!item.rooms);
     const rooms       = ngBuildings.filter((item: UISafeBuilding) => !item.rooms);

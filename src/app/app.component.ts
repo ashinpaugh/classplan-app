@@ -110,7 +110,7 @@ export class AppComponent extends AbstractComponent implements OnInit {
     }
 
     const modal = this.dialog.open(this.refLoadingSpinner, {
-      position: {top: '25%'},
+      position: {top: '25vh'},
       width: 'fit-content',
       height: 'auto',
       disableClose: true,
