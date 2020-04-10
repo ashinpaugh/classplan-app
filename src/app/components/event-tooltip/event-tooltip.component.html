@@ -38,6 +38,16 @@
     </div>
 
     <ng-container *ngTemplateOutlet="tplDays"></ng-container>
+
+    <ng-container *ngTemplateOutlet="tplDate; context: {
+      label: 'Start Date',
+      date: section.start
+    }"></ng-container>
+
+    <ng-container *ngTemplateOutlet="tplDate; context: {
+      label: 'End Date',
+      date: section.end
+    }"></ng-container>
   </div>
 </div>
 
@@ -62,5 +72,12 @@
   <div class="row" *ngIf="section.days">
     <span class="label">Days:</span>
     <span class="value">{{section.days}}: {{section.start_time}} - {{section.end_time}}</span>
+  </div>
+</ng-template>
+
+<ng-template #tplDate let-label="label" let-date="date">
+  <div class="row" *ngIf="date">
+    <span class="label">{{label}}:</span>
+    <span class="value">{{date | date:'mediumDate'}}</span>
   </div>
 </ng-template>
