@@ -7,6 +7,15 @@
 @import "~tippy.js/dist/tippy.css";
 @import "assets/material/material-styles";
 
+@keyframes fadeInOpacity {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 span.spacer {
   flex: 1 1 auto;
 }
@@ -45,4 +54,15 @@ mat-dialog-container.mat-dialog-container {
 // Toolbar menu.
 div.mat-menu-content .mat-menu-item {
   padding: 0 24px 0 16px;
+}
+
+.select-meeting-type {
+  min-width: calc(100% - 24px) !important;
+  transform: translate(48px, 26px) !important;
+  opacity: 1 !important;
+  animation-name: fadeInOpacity;
+  animation-iteration-count: 1;
+  animation-timing-function: ease-in;
+  animation-duration: 500ms;
+  animation-delay: 0ms;
 }

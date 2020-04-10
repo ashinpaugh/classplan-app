@@ -92,6 +92,21 @@
 
     <ng-container *ngTemplateOutlet="tplDependantFields"></ng-container>
 
+    <mat-list-item id="meeting-type" [hidden]="hideElements$ | async">
+      <mat-form-field>
+        <mat-select
+          multiple
+          disableOptionCentering
+          panelClass="select-meeting-type"
+          [(ngModel)]="meetingTypes"
+        >
+          <mat-option *ngFor="let type of availableMeetingTypes; let idx = index" [value]="idx">
+            {{type}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-list-item>
+
   </mat-list>
 
   <ng-container *ngTemplateOutlet="tplAdditionalFields"></ng-container>
@@ -294,30 +309,18 @@
 
 <ng-template #tplAdditionalFields>
 
-  <div id="other-fields" [hidden]="hideElements$ | async">
-    <mat-form-field id="meeting-type">
-      <mat-label>Meeting Types</mat-label>
+  <mat-selection-list (selectionChange)="advancedCheckChanged($event)" [hidden]="hideElements$ | async">
+    <mat-list-option
+      ngDefaultControl
+      color="primary"
+      [value]="'showAllDay'"
+      [selected]="(Filter$ | async).uiFilters.showAllDay"
+      [(ngModel)]="showAllDay"
+    >
+      Show unassigned time:
+    </mat-list-option>
 
-      <mat-select multiple [(ngModel)]="meetingTypes">
-        <mat-option *ngFor="let type of availableMeetingTypes; let idx = index" [value]="idx">
-          {{type}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-selection-list (selectionChange)="advancedCheckChanged($event)">
-      <mat-list-option
-        ngDefaultControl
-        color="primary"
-        [value]="'showAllDay'"
-        [selected]="(Filter$ | async).uiFilters.showAllDay"
-        [(ngModel)]="showAllDay"
-      >
-        Show unassigned time:
-      </mat-list-option>
-
-    </mat-selection-list>
-  </div>
+  </mat-selection-list>
 
 </ng-template>
 

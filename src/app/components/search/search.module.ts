@@ -5,7 +5,6 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatCardModule} from '@angular/material/card';
 import {MatDialogModule} from '@angular/material/dialog';
-import {MatGridListModule} from '@angular/material/grid-list';
 import {NgSelectModule} from '@ng-select/ng-select';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -28,7 +27,6 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
-    MatGridListModule,
     MatCheckboxModule,
     MatListModule,
     MatSelectModule,
