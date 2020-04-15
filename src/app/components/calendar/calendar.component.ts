@@ -14,6 +14,7 @@ import {EventTooltipComponent} from '../event-tooltip/event-tooltip.component';
 import {TooltipHostDirective} from '../../directives/tooltip-host/tooltip-host.directive';
 import {BehaviorSubject, Observable, of} from 'rxjs';
 import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
+import {environment} from '../../../environments/environment';
 
 interface ViewOptions {
   [viewId: string]: ViewOptionsInput;
@@ -219,22 +220,26 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       right: 'timeGridWeek,timeGridDay,dayGridWeek',
     };
 
-    const headers = {
-      timeGridWeek: {
-        buttonText: 'default',
-        header: defaultHeader,
-        columnHeaderFormat: { weekday: 'short' }
-      },
-      timeGridDay: {
-        buttonText: 'single',
-        header: defaultHeader,
-        columnHeaderFormat: { weekday: 'long' },
-      },
-      dayGridWeek: {
-        buttonText: 'compressed',
-        header: defaultHeader,
-        columnHeaderFormat: { weekday: 'short' },
+    const getColumnHeaderFormat = (weekdayFormat: string) => {
+      const config = { weekday: weekdayFormat };
+
+      return !environment.showDateInColumnHeader
+        ? config
+        : Object.assign(config, { month: 'numeric', day: 'numeric', omitCommas: true })
+    };
+
+    const getViewConfig = (buttonText: string, weekdayFormat: string, headerLayout = defaultHeader) => {
+      return {
+        buttonText,
+        header: headerLayout,
+        columnHeaderFormat: getColumnHeaderFormat(weekdayFormat),
       }
+    };
+
+    const headers = {
+      timeGridWeek: getViewConfig('default', 'short'),
+      timeGridDay: getViewConfig('single', 'long'),
+      dayGridWeek: getViewConfig('compressed', 'short'),
     };
 
     return Object.assign(headers, overrides || {});
