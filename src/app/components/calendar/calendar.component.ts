@@ -13,7 +13,7 @@ import {SearchFilters} from '../search/helper/filter.interfaces';
 import {EventTooltipComponent} from '../event-tooltip/event-tooltip.component';
 import {TooltipHostDirective} from '../../directives/tooltip-host/tooltip-host.directive';
 import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
+import {catchError, map, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 import {environment} from '../../../environments/environment';
 
 interface ViewOptions {
@@ -61,6 +61,9 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     this.title    = new EventEmitter<string>();
   }
 
+  /**
+   * @inheritDoc
+   */
   ngOnInit() {
     this.views  = this.views ? this.views : this.getCalendarViewOptions();
     this.header = this.views.timeGridWeek.header;
@@ -102,7 +105,10 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           const filters = this.filters$.getValue();
 
           if (filters && !!filters.term && !!filters.term.id) {
-            this.snackBar.open('No results found.', undefined, {duration: 5000});
+            this.snackBar.open('No results found.', undefined, {
+              duration:   5000,
+              panelClass: 'center',
+            });
           }
 
           return;
@@ -113,6 +119,9 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     ;
   }
 
+  /**
+   * @inheritDoc
+   */
   ngOnChanges(changes: SimpleChanges): void {
     if ('filters' in changes) {
       if (!!changes.filters.currentValue && !!changes.filters.currentValue.uiFilters) {
@@ -264,14 +273,11 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     }
 
     this.events$
-      .pipe(take(1))
-      .subscribe(events => {
-        if (!events || !events.length) {
-          return doSet('');
-        }
-
-        doSet(events[0].extendedProps.section.block.term.name);
-      })
+      .pipe(
+        take(1),
+        map(events => !events || !events.length ? '' : events[0].extendedProps.section.block.term.name),
+      )
+      .subscribe(title => doSet(title))
     ;
   }
 

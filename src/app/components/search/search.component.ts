@@ -271,7 +271,6 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       )
     ;
 
-    // this.blocks$ = this.ngOnChange<TermObject>(this.refTerm)
     this.blocks$ = this.onTermChange()
       .pipe(
         debounceTime(25),
