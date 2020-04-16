@@ -39,7 +39,7 @@
         [clearable]="true"
         [items]="terms$ | async"
         [markFirst]="true"
-        (clear)="refBlock.clearModel()"
+        (clear)="clearSelected()"
       ></ng-select>
     </mat-list-item>
 

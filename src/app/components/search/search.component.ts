@@ -135,12 +135,6 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
 
     this.log('filters', this.Filters);
 
-    // If the filters are set don't auto-select 'Full Semester' - it might have been unselected.
-    if (this.Filters.term) {
-      setTimeout(() => this.syncFilters(), 0);
-      return;
-    }
-
     // Auto-select the Full Semester block.
     this.blocks$
       .pipe(
@@ -158,6 +152,12 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
         }
       })
     ;
+
+    if (!this.Filters.term) {
+      return;
+    }
+
+    setTimeout(() => this.syncFilters(), 0);
   }
 
   /**
@@ -248,6 +248,13 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
   clearFilters() {
     FilterHelper.setup(true);
 
+    this.clearSelected();
+  }
+
+  /**
+   * Clear the values from all ngSelects.
+   */
+  clearSelected(): void {
     this.ngSelects.forEach(select => select.clearModel());
   }
 
