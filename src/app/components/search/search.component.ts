@@ -139,12 +139,21 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
     this.blocks$
       .pipe(
         // Wait for ng-select to parse the update.
-        debounceTime(25),
+        switchMap(blocks => timer(0).pipe(mapTo(blocks))),
         map(blocks => blocks && blocks.find(block => 'Full Semester' === block.name)),
         filter(fullSemester => !!fullSemester),
         takeUntil(this.ngUnsubscribe$),
       )
       .subscribe(fullSemester => {
+        // Automatically select Full Semester if there are no blocks set, or if a new term was selected.
+        const shouldSet = (!this.Filters.blocks || this.Filters.blocks.length === 0)
+          || (!!this.refTerm.selectedValues && this.Filters.term.id !== (this.refTerm.selectedValues[0] as TermObject).id)
+        ;
+
+        if (!shouldSet) {
+          return;
+        }
+
         const ngOption = this.refBlock.itemsList.findItem(fullSemester.id);
 
         if (ngOption && !ngOption.selected) {
@@ -153,11 +162,9 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       })
     ;
 
-    if (!this.Filters.term) {
-      return;
+    if (this.Filters.term) {
+      setTimeout(() => this.syncFilters(), 0);
     }
-
-    setTimeout(() => this.syncFilters(), 0);
   }
 
   /**
