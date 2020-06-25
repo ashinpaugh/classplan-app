@@ -13,12 +13,12 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
-  src: url(/app/assets/styles/MaterialIcons-Regular.eot); /* For IE6-8 */
+  src: url(/classplan/app/assets/styles/MaterialIcons-Regular.eot); /* For IE6-8 */
   src: local('Material Icons'),
   local('MaterialIcons-Regular'),
-  url(/app/assets/styles/MaterialIcons-Regular.woff2) format('woff2'),
-  url(/app/assets/styles/MaterialIcons-Regular.woff) format('woff'),
-  url(/app/assets/styles/MaterialIcons-Regular.ttf) format('truetype');
+  url(/classplan/app/assets/styles/MaterialIcons-Regular.woff2) format('woff2'),
+  url(/classplan/app/assets/styles/MaterialIcons-Regular.woff) format('woff'),
+  url(/classplan/app/assets/styles/MaterialIcons-Regular.ttf) format('truetype');
 }
 
 .material-icons {
