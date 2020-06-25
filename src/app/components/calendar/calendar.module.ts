@@ -5,7 +5,13 @@ import {FormsModule} from '@angular/forms';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {CalendarComponent} from './calendar.component';
 import {DirectivesModule} from '../../directives/directives.module';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 
+FullCalendarModule.registerPlugins([
+  dayGridPlugin,
+  timeGridPlugin,
+]);
 
 @NgModule({
   declarations: [

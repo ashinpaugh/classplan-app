@@ -1,23 +1,19 @@
 import {ChangeDetectionStrategy, Component, ComponentFactoryResolver, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {FullCalendarComponent} from '@fullcalendar/angular';
-import {PluginDef} from '@fullcalendar/core/plugin-system';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import {ToolbarInput, ViewOptionsInput} from '@fullcalendar/core/types/input-types';
+import {FullCalendarComponent, CalendarOptions} from '@fullcalendar/angular';
 import tippy, {hideAll} from 'tippy.js';
+import {BehaviorSubject, Observable, of} from 'rxjs';
+import {catchError, map, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 import {AbstractComponent} from '../abstract-component';
 import {EventObject, FullCalendarService} from '../../services/full-calendar/full-calendar.service';
 import {SectionMeetingType, SectionObject} from '../../services/section/section.interfaces';
 import {SearchFilters} from '../search/helper/filter.interfaces';
 import {EventTooltipComponent} from '../event-tooltip/event-tooltip.component';
 import {TooltipHostDirective} from '../../directives/tooltip-host/tooltip-host.directive';
-import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, map, shareReplay, switchMap, take, takeUntil} from 'rxjs/operators';
 import {environment} from '../../../environments/environment';
 
-interface ViewOptions {
-  [viewId: string]: ViewOptionsInput;
+interface ViewObject {
+  type: string;
 }
 
 @Component({
@@ -32,19 +28,15 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   @ViewChild(FullCalendarComponent, { static: true }) refFullCalendar: FullCalendarComponent;
   @ViewChild(TooltipHostDirective, { static: true }) refTooltip: TooltipHostDirective;
 
-  @Input() views: ViewOptions;
-  @Input() plugins: PluginDef[];
+  @Input() options: CalendarOptions;
   @Input() filters: SearchFilters;
-  @Input() allDaySlot: boolean = true;
 
   @Output() events: EventEmitter<EventObject[]>;
-  @Output() title: EventEmitter<string>;
+  @Output() title:  EventEmitter<string>;
 
-  events$: Observable<EventObject[]>;
+  events$:  Observable<EventObject[]>;
   filters$: BehaviorSubject<SearchFilters>;
-
-  // @see https://fullcalendar.io/docs/header
-  header: boolean | ToolbarInput;
+  options$: BehaviorSubject<CalendarOptions>;
 
   constructor(
     protected componentFactoryResolver: ComponentFactoryResolver,
@@ -54,19 +46,19 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   ) {
     super();
 
-    this.plugins = [dayGridPlugin, timeGridPlugin];
+    this.events = new EventEmitter<EventObject[]>();
+    this.title  = new EventEmitter<string>();
 
+    this.options$ = new BehaviorSubject<CalendarOptions>(undefined);
     this.filters$ = new BehaviorSubject<SearchFilters>(undefined);
-    this.events   = new EventEmitter<EventObject[]>();
-    this.title    = new EventEmitter<string>();
   }
 
   /**
    * @inheritDoc
    */
-  ngOnInit() {
-    this.views  = this.views ? this.views : this.getCalendarViewOptions();
-    this.header = this.views.timeGridWeek.header;
+  ngOnInit(): void {
+
+    this.options$.next(this.getCalendarOptions(this.options));
 
     this.events$ = this.filters$.asObservable()
       .pipe(
@@ -99,8 +91,6 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     this.events$
       .pipe(takeUntil(this.ngUnsubscribe$))
       .subscribe(events => {
-        this.events.next(events);
-
         if (!events || !events.length) {
           const filters = this.filters$.getValue();
 
@@ -114,7 +104,12 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
           return;
         }
 
-        this.shiftCalendarDate(events);
+        this
+          .updateOptions('events', events)
+          .shiftCalendarDate(events)
+        ;
+
+        this.events.next(events);
       })
     ;
   }
@@ -125,11 +120,38 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   ngOnChanges(changes: SimpleChanges): void {
     if ('filters' in changes) {
       if (!!changes.filters.currentValue && !!changes.filters.currentValue.uiFilters) {
-        this.allDaySlot = (changes.filters.currentValue as SearchFilters).uiFilters.showAllDay;
+        const allDaySlot = (changes.filters.currentValue as SearchFilters).uiFilters.showAllDay;
+        this.updateOptions('allDaySlot', allDaySlot);
       }
 
       this.filters$.next(changes.filters.currentValue);
     }
+  }
+
+  updateOptions(options: CalendarOptions): this;
+  updateOptions<T extends keyof CalendarOptions>(option: keyof CalendarOptions, value: CalendarOptions[T]): this;
+
+  /**
+   * Update full-calendar's options.
+   *
+   * @param options
+   * @param value
+   */
+  updateOptions<T extends keyof CalendarOptions>(
+    options: CalendarOptions | T,
+    value?: CalendarOptions[T],
+  ): this {
+    let config = this.options$.getValue() as CalendarOptions;
+
+    if (typeof options === 'object') {
+      config = Object.assign(config, options);
+    } else {
+      config[options] = value;
+    }
+
+    this.options$.next(config);
+
+    return this;
   }
 
   /**
@@ -137,9 +159,11 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
    *
    * @param event
    */
-  calendarRendered(event: {view: any, el: HTMLElement}): void {
+  calendarRendered(event: {view: ViewObject, el: HTMLElement}): void {
     this.setTitle();
-    this.header = this.views[event.view.type].header;
+
+    const headerConfig = this.getCalendarViewOptions(this.options);
+    this.updateOptions(headerConfig[event.view.type]);
   }
 
   /**
@@ -148,12 +172,9 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
    * @param data
    */
   eventRender(data: {
-    event: EventObject,
     el: HTMLElement,
-    isMirror: boolean,
-    isStart: boolean,
-    isEnd: boolean,
-    view: any
+    event: EventObject,
+    view: ViewObject,
   }) {
 
     tippy(data.el, {
@@ -173,14 +194,30 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   }
 
   /**
-   * Override the FC toolbar title.
-   *
-   * There is currently no API to support changing this dynamically.
-   *
-   * @param data
+   * Set FC's toolbar title.
    */
-  datesRendered(data: {view: any, el: HTMLElement}) {
-    this.setTitle();
+  setTitle(override?: string): void {
+    const doSet = (title: string) => {
+      const refTitle = document.querySelector('.fc-toolbar-title');
+
+      if (refTitle) {
+        refTitle.innerHTML = title;
+      }
+
+      this.title.next(title);
+    };
+
+    if (undefined !== override) {
+      return doSet(override);
+    }
+
+    this.events$
+      .pipe(
+        take(1),
+        map(events => !events || !events.length ? '' : events[0].extendedProps.section.block.term.name),
+      )
+      .subscribe(title => doSet(title))
+    ;
   }
 
   /**
@@ -220,13 +257,41 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   }
 
   /**
+   * Create the calendar config.
+   *
+   * @param overrides
+   */
+  protected getCalendarOptions(overrides: CalendarOptions = {}): CalendarOptions {
+    const defaultOptions = {
+      initialView: 'timeGridWeek',
+      slotMinTime: '07:00:00',
+      slotMaxTime: '23:00:00',
+      contentHeight: 'auto',
+      allDayContent: 'unassigned',
+      startParam: null,
+      endParam: null,
+      lazyFetching: true,
+      weekends: false,
+      eventOrder: ['start', 'allDay', 'backgroundColor'],
+      viewDidMount: ($event) => this.calendarRendered($event),
+      eventDidMount: ($event) => this.eventRender($event),
+      datesSet: ($event) => this.setTitle(),
+    };
+
+    const views   = this.getCalendarViewOptions(overrides);
+    const options = Object.assign(defaultOptions, overrides || {});
+
+    return Object.assign(options, views[options.initialView]);
+  }
+
+  /**
    * Get the default options for setting FC's toolbar content layout.
    */
-  protected getCalendarViewOptions(overrides?: ViewOptions) {
+  protected getCalendarViewOptions(overrides?: CalendarOptions) {
     const defaultHeader = {
-      left: 'prev,next',
+      start: 'prev,next',
       center: '',
-      right: 'timeGridWeek,timeGridDay,dayGridWeek',
+      end: 'timeGridWeek,timeGridDay,dayGridWeek',
     };
 
     const getColumnHeaderFormat = (weekdayFormat: string) => {
@@ -240,8 +305,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     const getViewConfig = (buttonText: string, weekdayFormat: string, headerLayout = defaultHeader) => {
       return {
         buttonText,
-        header: headerLayout,
-        columnHeaderFormat: getColumnHeaderFormat(weekdayFormat),
+        headerToolbar: headerLayout,
+        dayHeaderFormat: getColumnHeaderFormat(weekdayFormat),
       }
     };
 
@@ -252,33 +317,6 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
     };
 
     return Object.assign(headers, overrides || {});
-  }
-
-  /**
-   * Set FC's toolbar title.
-   */
-  protected setTitle(override?: string): void {
-    const doSet = (title: string) => {
-      const refTitle = document.querySelector('.fc-center h2');
-
-      if (refTitle) {
-        refTitle.innerHTML = title;
-      }
-
-      this.title.next(title);
-    };
-
-    if (undefined !== override) {
-      return doSet(override);
-    }
-
-    this.events$
-      .pipe(
-        take(1),
-        map(events => !events || !events.length ? '' : events[0].extendedProps.section.block.term.name),
-      )
-      .subscribe(title => doSet(title))
-    ;
   }
 
 }

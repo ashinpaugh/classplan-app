@@ -3,9 +3,7 @@ classplan-calendar {
     margin: 32px;
 
     full-calendar {
-      td.fc-today {
-        background: unset;
-      }
+      --fc-today-bg-color: #fafafa;
     }
   }
 }
