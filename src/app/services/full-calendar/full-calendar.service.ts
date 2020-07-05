@@ -47,9 +47,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Fetch all the sections based on the provided filter criteria and map them to FullCalendar Event Objects.
-   *
-   * @param filters
-   * @param colors
    */
   fetchAll(filters: SearchFilters, colors: CalendarColorMatrix): Observable<EventObject[]> {
     const params = this.sections.filtersToSectionParams(filters);
@@ -70,8 +67,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Find the first ISO date out of the provided events.
-   *
-   * @param events
    */
   getEarliestSectionStart(events: EventObject[]): Date {
     const startParam = (event: EventObject) => {
@@ -102,8 +97,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Turns a date into a fullcalendar 'parsable' date.
-   *
-   * @param date
    */
   formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
@@ -111,10 +104,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Get the color value for an event.
-   *
-   * @param matrix
-   * @param section
-   * @param defaultColor
    */
   getColor(matrix: CalendarColorMatrix, section: SectionObject, defaultColor = environment.defaultEventColor): string {
     const fieldSpecificity = ['instructor', 'room', 'building', 'subject', 'block'];
@@ -129,9 +118,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Take a section and map it to a FullCalendar Event Object.
-   *
-   * @param colors
-   * @param section
    */
   protected formatSourceToEvent(colors: CalendarColorMatrix, section: SectionObject): EventObject {
     const isAllDay = this.isAllDay(section);
@@ -163,9 +149,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Map a section's day strings to FC event days.
-   *
-   * @param section
-   * @param isAllDay
    */
   protected getDays(section: SectionObject, isAllDay?: boolean): number[] {
     isAllDay  = isAllDay === undefined ? this.isAllDay(section) : isAllDay;
@@ -175,18 +158,16 @@ export class FullCalendarService extends AbstractLoggable {
       return Array.from(dow.keys());
     }
 
-    const days = section.days.indexOf('/')
+    const days = section.days.indexOf('/') > -1
       ? section.days.split('/')
       : section.days.split('')
     ;
 
-    return !days.length ? [] : days.map(part => dow.indexOf(part));
+    return days.map(part => dow.indexOf(part));
   }
 
   /**
    * Format the time.
-   *
-   * @param time
    */
   protected getTime(time: string): string {
     if (!time) {
