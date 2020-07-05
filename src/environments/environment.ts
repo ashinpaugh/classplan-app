@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   // apiUrl: 'http://classplan.ou.test/',
-  apiUrl: 'https://casapps-dev.ou.edu/classplan/index.php/',
+  apiUrl: window.location.href,
   defaultEventColor: '#3f51b5',
   showDateInColumnHeader: true,
 };

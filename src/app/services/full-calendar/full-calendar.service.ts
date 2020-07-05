@@ -168,25 +168,19 @@ export class FullCalendarService extends AbstractLoggable {
    * @param isAllDay
    */
   protected getDays(section: SectionObject, isAllDay?: boolean): number[] {
-    const days = section.days;
-    const dow  = ['U', 'M', 'T', 'W', 'R', 'F', 'S'];
-
-    isAllDay = isAllDay === undefined ? this.isAllDay(section) : isAllDay;
+    isAllDay  = isAllDay === undefined ? this.isAllDay(section) : isAllDay;
+    const dow = ['U', 'M', 'T', 'W', 'R', 'F', 'S'];
 
     if (isAllDay) {
       return Array.from(dow.keys());
     }
 
-    if (!days.length) {
-      return [];
-    }
-
-    const parts = -1 === days.indexOf('/')
-      ? [days]
-      : days.split('/')
+    const days = section.days.indexOf('/')
+      ? section.days.split('/')
+      : section.days.split('')
     ;
 
-    return parts.map(part => dow.indexOf(part));
+    return !days.length ? [] : days.map(part => dow.indexOf(part));
   }
 
   /**
@@ -206,9 +200,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Determine if the section is considered an all day event.
-   *
-   * @param section
-   * @param includeOnline
    */
   protected isAllDay(section: SectionObject, includeOnline: boolean = true): boolean {
     return includeOnline && this.isOnline(section)
@@ -218,8 +209,6 @@ export class FullCalendarService extends AbstractLoggable {
 
   /**
    * Checks if a class is taught online.
-   *
-   * @param section
    */
   protected isOnline(section: SectionObject): boolean {
     return section.building && 'WEB' === section.building.name || section.meeting_type === SectionMeetingType.Web;
