@@ -2,8 +2,30 @@ classplan-calendar {
   div.ou-calendar {
     margin: 32px;
 
-    full-calendar {
+    full-calendar.fc {
       --fc-today-bg-color: #fafafa;
+      --override-time-width: 100px;
+
+      .fc-timegrid-axis-cushion {
+        max-width: var(--override-time-width);
+      }
+
+      .fc-timegrid-axis-frame {
+        justify-content: center;
+      }
+
+      colgroup col {
+        width: var(--override-time-width) !important;
+      }
+
+      .fc-timegrid-slot-label-frame {
+        text-align: center;
+      }
     }
   }
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup {
+  color: inherit;
+  font-weight: bold;
 }

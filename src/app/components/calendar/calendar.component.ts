@@ -162,8 +162,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   calendarRendered(event: {view: ViewObject, el: HTMLElement}): void {
     this.setTitle();
 
-    const headerConfig = this.getCalendarViewOptions(this.options);
-    this.updateOptions(headerConfig[event.view.type]);
+    const headerConfig = this.getCalendarViewOptions(event.view.type);
+    this.updateOptions(headerConfig);
   }
 
   /**
@@ -264,8 +264,8 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
   protected getCalendarOptions(overrides: CalendarOptions = {}): CalendarOptions {
     const defaultOptions = {
       initialView: 'timeGridWeek',
-      slotMinTime: '07:00:00',
-      slotMaxTime: '23:00:00',
+      slotMinTime: '06:00:00',
+      slotMaxTime: '24:00:00',
       contentHeight: 'auto',
       allDayContent: 'unassigned',
       startParam: null,
@@ -275,48 +275,42 @@ export class CalendarComponent extends AbstractComponent implements OnInit, OnCh
       eventOrder: ['start', 'allDay', 'backgroundColor'],
       viewDidMount: ($event) => this.calendarRendered($event),
       eventDidMount: ($event) => this.eventRender($event),
-      datesSet: ($event) => this.setTitle(),
+      datesSet: () => this.setTitle(),
     };
 
-    const views   = this.getCalendarViewOptions(overrides);
     const options = Object.assign(defaultOptions, overrides || {});
+    const views   = this.getCalendarViewOptions(options.initialView);
 
-    return Object.assign(options, views[options.initialView]);
+    return Object.assign(options, views);
   }
 
   /**
    * Get the default options for setting FC's toolbar content layout.
    */
-  protected getCalendarViewOptions(overrides?: CalendarOptions) {
-    const defaultHeader = {
-      start: 'prev,next',
-      center: '',
-      end: 'timeGridWeek,timeGridDay,dayGridWeek',
-    };
-
+  protected getCalendarViewOptions(viewName: string, overrides: CalendarOptions = this.options) {
     const getColumnHeaderFormat = (weekdayFormat: string) => {
       const config = { weekday: weekdayFormat };
-
       return !environment.showDateInColumnHeader
         ? config
         : Object.assign(config, { month: 'numeric', day: 'numeric', omitCommas: true })
+      ;
     };
 
-    const getViewConfig = (buttonText: string, weekdayFormat: string, headerLayout = defaultHeader) => {
-      return {
-        buttonText,
-        headerToolbar: headerLayout,
-        dayHeaderFormat: getColumnHeaderFormat(weekdayFormat),
-      }
+    const viewConfig = {
+      dayHeaderFormat: getColumnHeaderFormat('timeGridDay' === viewName ? 'long' : 'short'),
+      headerToolbar: {
+        start: 'prev,next',
+        center: '',
+        end: 'timeGridWeek,timeGridDay,dayGridWeek',
+      },
+      buttonText: {
+        timeGridWeek: 'default',
+        timeGridDay: 'single',
+        dayGridWeek: 'compressed',
+      },
     };
 
-    const headers = {
-      timeGridWeek: getViewConfig('default', 'short'),
-      timeGridDay: getViewConfig('single', 'long'),
-      dayGridWeek: getViewConfig('compressed', 'short'),
-    };
-
-    return Object.assign(headers, overrides || {});
+    return Object.assign(viewConfig, overrides || {});
   }
 
 }
