@@ -17,8 +17,6 @@ export class SectionService extends AbstractService {
 
   /**
    * Find all the sections matching the provided filter criteria.
-   *
-   * @param params
    */
   fetchAll(params: SectionFetchAllParams): Observable<SectionObject[]> {
     const uri       = 'section/find.json';
@@ -43,8 +41,6 @@ export class SectionService extends AbstractService {
 
   /**
    * Fetch the response for the export view button.
-   *
-   * @param filters
    */
   getExportStream(filters: SearchFilters): Promise<Response> {
     const params = this.filtersToSectionParams(filters);
@@ -60,9 +56,6 @@ export class SectionService extends AbstractService {
 
   /**
    * Inline the export view response for download.
-   *
-   * @param response
-   * @param defaultFilename
    */
   async handleStreamDownload(response: Response, defaultFilename: string = 'classplan-export.csv') {
     if (!response.ok || response.status !== 200) {
@@ -88,8 +81,6 @@ export class SectionService extends AbstractService {
 
   /**
    * Convert the search component filters to API params.
-   *
-   * @param filters
    */
   filtersToSectionParams(filters: SearchFilters): SectionFetchAllParams {
     const getIds = (set: {id: number}[]): number[] => {
