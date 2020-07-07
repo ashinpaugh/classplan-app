@@ -2,14 +2,15 @@ import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {AbstractService} from '../abstract-service';
 import {ApiGetTerm, ApiGetTermCollection} from './term.interfaces';
+import {EventService} from '../event/event.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TermService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
   }
 
   /**

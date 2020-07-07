@@ -5,14 +5,15 @@ import {environment} from '../../../environments/environment';
 import {SearchFilters} from '../../components/search/helper/filter.helper';
 import {Observable, of} from 'rxjs';
 import {map, tap} from 'rxjs/operators';
+import {EventService} from '../event/event.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SectionService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
   }
 
   /**

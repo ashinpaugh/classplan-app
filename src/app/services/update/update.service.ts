@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
 import {Observable, timer} from 'rxjs';
 import {concatMap, tap} from 'rxjs/operators';
+import {EventService} from '../event/event.service';
 
 export interface UpdateObject {
   id: number;
@@ -18,8 +19,8 @@ export interface UpdateObject {
 })
 export class UpdateService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
 
     this.LoggingEnabled = false;
   }

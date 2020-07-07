@@ -4,6 +4,7 @@ import {BasicObject, Dictionary} from '../../interfaces/dictionary';
 import {BlockObject} from '../term/term.interfaces';
 import {merge, Observable} from 'rxjs';
 import {map, tap, toArray} from 'rxjs/operators';
+import {EventService} from '../event/event.service';
 
 export interface ApiGetBlockAwareInstructorList {
   block: BlockObject;
@@ -15,8 +16,8 @@ export interface ApiGetBlockAwareInstructorList {
 })
 export class InstructorService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
   }
 
   /**

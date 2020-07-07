@@ -5,6 +5,7 @@ import {BasicObject} from '../../interfaces/dictionary';
 import {ArrayUtil} from '../../classes/tools/array.util';
 import {merge, Observable} from 'rxjs';
 import {map, tap, toArray} from 'rxjs/operators';
+import {EventService} from '../event/event.service';
 
 export interface BlockAwareSubjectList {
   block: BlockObject;
@@ -17,8 +18,8 @@ export interface BlockAwareSubjectList {
 })
 export class SubjectService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
   }
 
   /**
