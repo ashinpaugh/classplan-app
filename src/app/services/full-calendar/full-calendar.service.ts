@@ -121,7 +121,6 @@ export class FullCalendarService extends AbstractLoggable {
    */
   protected formatSourceToEvent(colors: CalendarColorMatrix, section: SectionObject): EventObject {
     const isAllDay = this.isAllDay(section);
-    // section.meeting_type_str = this.meetingTypeToStr(section.meeting_type);
 
     const event = {
       id: section.id,

@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
 import {BuildingObject} from '../building/building.service';
 import {Observable} from 'rxjs';
+import {EventService} from '../event/event.service';
 
 export interface RoomObject {
   id: number;
@@ -19,8 +20,8 @@ export interface BuildingListObject {
 })
 export class RoomService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
   }
 
   fetchAll(building: BuildingObject) : Observable<BuildingListObject> {

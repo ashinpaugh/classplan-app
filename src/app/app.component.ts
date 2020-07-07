@@ -8,6 +8,8 @@ import {SectionService} from './services/section/section.service';
 import * as Filters from './components/search/helper/filter.helper';
 import {Observable} from 'rxjs';
 import {filter, map, shareReplay, startWith, take, takeUntil} from 'rxjs/operators';
+import {EventService} from './services/event/event.service';
+import {AppEvent} from './services/event/event.interface';
 
 @Component({
   selector: 'classplan-root',
@@ -32,6 +34,7 @@ export class AppComponent extends AbstractComponent implements OnInit {
     protected dialog: MatDialog,
     protected updates: UpdateService,
     protected sections: SectionService,
+    protected event: EventService,
   ) {
     super();
   }
@@ -116,11 +119,33 @@ export class AppComponent extends AbstractComponent implements OnInit {
       disableClose: true,
     });
 
-    this.updateProgress$ = this.updates.check()
+    const updates$ = this.updates.check()
       .pipe(
-        map(log => log.progress ? log.progress * 100 : 0),
         takeUntil(modal.afterClosed()),
         shareReplay(1),
+      )
+    ;
+
+    let started = false;
+
+    updates$.subscribe(
+      update => {
+        let event = AppEvent.Events.API_UPDATE_START;
+
+        if (update.progress > 0 && !started) {
+          started = true;
+          event   = AppEvent.Events.API_UPDATE_PENDING;
+        }
+
+        this.event.trigger<{update: UpdateObject}>(event, {
+          data: {update},
+        });
+      }
+    )
+
+    this.updateProgress$ = updates$
+      .pipe(
+        map(log => log.progress ? log.progress * 100 : 0),
       )
     ;
 
@@ -130,7 +155,15 @@ export class AppComponent extends AbstractComponent implements OnInit {
         take(1),
       )
       .subscribe(
-        () => modal.close(),
+        (progress) => {
+          this.event.trigger(AppEvent.Events.API_UPDATE_END, {
+            data: {
+              update: {progress},
+            }
+          });
+
+          modal.close();
+        },
         err => this.warn('parseUpdateLog -> modal', err)
       )
     ;

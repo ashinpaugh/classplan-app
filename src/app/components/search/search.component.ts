@@ -140,7 +140,7 @@ export class SearchComponent extends AbstractComponent implements AfterViewInit 
       .pipe(
         // Wait for ng-select to parse the update.
         switchMap(blocks => timer(0).pipe(mapTo(blocks))),
-        map(blocks => blocks && blocks.find(block => 'Full Semester' === block.name)),
+        map(blocks => blocks && blocks.find(block => ['Full Semester', 'Full Term'].includes(block.name))),
         filter(fullSemester => !!fullSemester),
         takeUntil(this.ngUnsubscribe$),
       )

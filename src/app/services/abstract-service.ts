@@ -1,5 +1,7 @@
 import {AbstractLoggable} from '../classes/abstract-loggable';
 import {environment} from '../../environments/environment';
+import {EventService} from './event/event.service';
+import {AppEvent} from './event/event.interface';
 import {from, Observable, of, throwError} from 'rxjs';
 import {concatMap, tap} from 'rxjs/operators';
 
@@ -13,8 +15,10 @@ export abstract class AbstractService extends AbstractLoggable {
   // Poor mans caching.
   protected apiTracker: Map<string, any> = new Map<string, object>();
 
-  constructor() {
+  constructor(protected event: EventService) {
     super();
+
+    this.event.register(AppEvent.Events.API_UPDATE_END, this, () => this.clear());
   }
 
   /**
@@ -140,6 +144,15 @@ export abstract class AbstractService extends AbstractLoggable {
     });
 
     return body.join('&');
+  }
+
+  /**
+   * Clear local caching.
+   */
+  protected clear(): void {
+    this.debug('clear');
+
+    this.apiTracker.clear();
   }
 
 }

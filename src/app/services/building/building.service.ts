@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {AbstractService} from '../abstract-service';
 import {BasicObject} from '../../interfaces/dictionary';
 import {RoomObject} from '../room/room.service';
+import {EventService} from '../event/event.service';
 import {Observable} from 'rxjs';
 import {map, tap} from 'rxjs/operators';
 
@@ -21,8 +22,8 @@ export type UISafeBuilding = (BasicObject & {rooms: UISafeRoom[]});
 })
 export class BuildingService extends AbstractService {
 
-  constructor() {
-    super();
+  constructor(event: EventService) {
+    super(event);
   }
 
   fetchAll() : Observable<UISafeBuilding[]> {
